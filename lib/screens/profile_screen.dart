@@ -1,0 +1,371 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:re_turn_app/providers/voucher_provider.dart';
+import 'package:re_turn_app/widgets/voucher_card.dart';
+
+class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Profile'),
+        elevation: 0,
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        actions: [
+          IconButton(
+            onPressed: () => _showSettingsBottomSheet(context),
+            icon: const Icon(Icons.settings),
+          ),
+        ],
+      ),
+      body: Consumer<VoucherProvider>(
+        builder: (context, voucherProvider, child) {
+          final stats = voucherProvider.getStatistics();
+
+          return Column(
+            children: [
+              // Profile Header
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(24.0),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.inversePrimary,
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(24),
+                    bottomRight: Radius.circular(24),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    // Avatar
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundColor: Theme.of(context).primaryColor,
+                      child: const Icon(
+                        Icons.person,
+                        size: 40,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // User Info
+                    Text(
+                      'Re-Turn User',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Eco-friendly recycler since ${DateTime.now().year}',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Quick Stats Row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildStatColumn(
+                          '${stats['total']}',
+                          'Total Vouchers',
+                          Icons.receipt_long,
+                        ),
+                        Container(
+                          height: 40,
+                          width: 1,
+                          color: Colors.grey[300],
+                        ),
+                        _buildStatColumn(
+                          '€${voucherProvider.totalValue.toStringAsFixed(2)}',
+                          'Available Credit',
+                          Icons.euro,
+                        ),
+                        Container(
+                          height: 40,
+                          width: 1,
+                          color: Colors.grey[300],
+                        ),
+                        _buildStatColumn(
+                          '${stats['used']}',
+                          'Used Vouchers',
+                          Icons.check_circle,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // Tab Bar
+              Container(
+                color: Colors.grey[50],
+                child: TabBar(
+                  controller: _tabController,
+                  labelColor: Theme.of(context).primaryColor,
+                  unselectedLabelColor: Colors.grey[600],
+                  indicatorColor: Theme.of(context).primaryColor,
+                  tabs: const [
+                    Tab(text: 'All', icon: Icon(Icons.list)),
+                    Tab(text: 'Active', icon: Icon(Icons.radio_button_unchecked)),
+                    Tab(text: 'Used', icon: Icon(Icons.check_circle)),
+                  ],
+                ),
+              ),
+
+              // Tab Content
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    // All Vouchers
+                    _buildVoucherList(voucherProvider.vouchers, voucherProvider),
+                    // Active Vouchers
+                    _buildVoucherList(voucherProvider.activeVouchers, voucherProvider),
+                    // Used Vouchers
+                    _buildVoucherList(voucherProvider.usedVouchers, voucherProvider),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildStatColumn(String value, String label, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, color: Theme.of(context).primaryColor, size: 20),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVoucherList(List vouchers, VoucherProvider provider) {
+    if (vouchers.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.receipt_long,
+              size: 64,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No vouchers found',
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        await provider.loadVouchers();
+      },
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        itemCount: vouchers.length,
+        itemBuilder: (context, index) {
+          return VoucherCard(voucher: vouchers[index]);
+        },
+      ),
+    );
+  }
+
+  void _showSettingsBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle
+            Center(
+              child: Container(
+                width: 50,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            Text(
+              'Settings',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 24),
+
+            // Settings Options
+            _buildSettingsTile(
+              Icons.notifications,
+              'Notifications',
+              'Manage notification preferences',
+                  () {
+                Navigator.pop(context);
+                _showComingSoonSnackBar(context, 'Notifications');
+              },
+            ),
+            _buildSettingsTile(
+              Icons.location_on,
+              'Location Services',
+              'Auto-detect store locations',
+                  () {
+                Navigator.pop(context);
+                _showComingSoonSnackBar(context, 'Location Services');
+              },
+            ),
+            _buildSettingsTile(
+              Icons.backup,
+              'Backup & Sync',
+              'Backup vouchers to cloud',
+                  () {
+                Navigator.pop(context);
+                _showComingSoonSnackBar(context, 'Backup & Sync');
+              },
+            ),
+            _buildSettingsTile(
+              Icons.help,
+              'Help & Support',
+              'Get help and contact support',
+                  () {
+                Navigator.pop(context);
+                _showAboutDialog(context);
+              },
+            ),
+            _buildSettingsTile(
+              Icons.info,
+              'About',
+              'App version and information',
+                  () {
+                Navigator.pop(context);
+                _showAboutDialog(context);
+              },
+            ),
+
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsTile(
+      IconData icon,
+      String title,
+      String subtitle,
+      VoidCallback onTap,
+      ) {
+    return ListTile(
+      leading: Icon(icon, color: Theme.of(context).primaryColor),
+      title: Text(title),
+      subtitle: Text(subtitle),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: onTap,
+    );
+  }
+
+  void _showComingSoonSnackBar(BuildContext context, String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$feature coming soon!'),
+        action: SnackBarAction(
+          label: 'OK',
+          onPressed: () {},
+        ),
+      ),
+    );
+  }
+
+  void _showAboutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('About Re-Turn Digital'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Version: 1.0.0'),
+            SizedBox(height: 8),
+            Text(
+              'Re-Turn Digital helps you manage your bottle return vouchers digitally, making it easier to track and use your deposit credits.',
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Features:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 4),
+            Text('• Scan and store voucher barcodes'),
+            Text('• Track total available credit'),
+            Text('• Mark vouchers as used'),
+            Text('• View voucher history'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+}
