@@ -36,7 +36,7 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         barcode $textType,
         deposit_value $realType,
-        store_name TEXT,
+        store_name $textType,
         store_location TEXT,
         date_created $textType,
         is_used INTEGER DEFAULT 0,

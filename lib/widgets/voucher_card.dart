@@ -103,7 +103,7 @@ class VoucherCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        voucher.storeName ?? 'Unknown Store',
+                        voucher.storeName,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
