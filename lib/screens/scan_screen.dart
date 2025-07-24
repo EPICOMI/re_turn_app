@@ -184,11 +184,17 @@ class _ScanScreenState extends State<ScanScreen> {
                     TextFormField(
                       controller: _storeNameController,
                       decoration: const InputDecoration(
-                        labelText: 'Store Name',
+                        labelText: 'Store Name *',
                         hintText: 'e.g., Lidl, Tesco, SuperValu',
                         prefixIcon: Icon(Icons.store),
                         border: OutlineInputBorder(),
                       ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a store name';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 16),
 
@@ -476,9 +482,7 @@ class _ScanScreenState extends State<ScanScreen> {
 
     final barcode = _barcodeController.text.trim();
     final depositValue = double.parse(_depositController.text.trim());
-    final storeName = _storeNameController.text.trim().isEmpty
-        ? null
-        : _storeNameController.text.trim();
+    final storeName = _storeNameController.text.trim();
     final storeLocation = _storeLocationController.text.trim().isEmpty
         ? null
         : _storeLocationController.text.trim();

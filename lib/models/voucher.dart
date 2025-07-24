@@ -2,7 +2,7 @@ class Voucher {
   final int? id;
   final String barcode;
   final double depositValue;
-  final String? storeName;
+  final String storeName;
   final String? storeLocation;
   final DateTime dateCreated;
   final bool isUsed;
@@ -14,7 +14,7 @@ class Voucher {
     this.id,
     required this.barcode,
     required this.depositValue,
-    this.storeName,
+    required this.storeName,
     this.storeLocation,
     required this.dateCreated,
     this.isUsed = false,
@@ -45,7 +45,7 @@ class Voucher {
       id: json['id'] as int?,
       barcode: json['barcode'] as String,
       depositValue: json['deposit_value'] as double,
-      storeName: json['store_name'] as String?,
+      storeName: json['store_name'] as String,
       storeLocation: json['store_location'] as String?,
       dateCreated: DateTime.parse(json['date_created'] as String),
       isUsed: (json['is_used'] as int) == 1,
