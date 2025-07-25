@@ -290,6 +290,15 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               },
             ),
             _buildSettingsTile(
+              Icons.bar_chart,
+              'Lifetime Stats',
+              'See your lifetime recycling statistics',
+                  () {
+                Navigator.pop(context);
+                _showLifetimeStatsDialog(context);
+              },
+            ),
+            _buildSettingsTile(
               Icons.info,
               'About',
               'App version and information',
@@ -357,6 +366,41 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             Text('• Track total available credit'),
             Text('• Mark vouchers as used'),
             Text('• View voucher history'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLifetimeStatsDialog(BuildContext context) {
+    final voucherProvider = Provider.of<VoucherProvider>(context, listen: false);
+    final stats = voucherProvider.getStatistics();
+    final lifetimeCredit = stats['lifetimeCredit'];
+    final estimatedItems = lifetimeCredit > 0 ? (lifetimeCredit / 0.20).round() : 0;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Lifetime Stats'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Total Lifetime Credit: €${lifetimeCredit.toStringAsFixed(2)}',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Wow! You have recycled approximately $estimatedItems items. Thank you for helping the planet!',
+              style: const TextStyle(fontSize: 14),
+            ),
           ],
         ),
         actions: [

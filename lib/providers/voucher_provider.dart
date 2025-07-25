@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:re_turn_app/models/voucher.dart';
 import 'package:re_turn_app/database/database_helper.dart';
 
@@ -6,6 +7,7 @@ class VoucherProvider with ChangeNotifier {
   List<Voucher> _vouchers = [];
   double _totalValue = 0.0;
   bool _isLoading = false;
+  double _lifetimeCredit = 0.0;
 
   List<Voucher> get vouchers => _vouchers;
   List<Voucher> get activeVouchers =>
@@ -14,9 +16,11 @@ class VoucherProvider with ChangeNotifier {
       _vouchers.where((voucher) => voucher.isUsed).toList();
   double get totalValue => _totalValue;
   bool get isLoading => _isLoading;
+  double get lifetimeCredit => _lifetimeCredit;
 
   VoucherProvider() {
     loadVouchers();
+    _loadLifetimeCredit();
   }
 
   // Load all vouchers from database
@@ -35,6 +39,19 @@ class VoucherProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> _loadLifetimeCredit() async {
+    final prefs = await SharedPreferences.getInstance();
+    _lifetimeCredit = prefs.getDouble('lifetimeCredit') ?? 0.0;
+    notifyListeners();
+  }
+
+  Future<void> _updateLifetimeCredit(double amount) async {
+    final prefs = await SharedPreferences.getInstance();
+    _lifetimeCredit += amount;
+    await prefs.setDouble('lifetimeCredit', _lifetimeCredit);
+    notifyListeners();
+  }
+
   // Add new voucher
   Future<bool> addVoucher(Voucher voucher) async {
     try {
@@ -48,6 +65,7 @@ class VoucherProvider with ChangeNotifier {
 
       _vouchers.insert(0, newVoucher);
       _totalValue += voucher.depositValue;
+      await _updateLifetimeCredit(voucher.depositValue);
 
       notifyListeners();
       return true;
@@ -106,7 +124,7 @@ class VoucherProvider with ChangeNotifier {
   List<Voucher> getVouchersByStore(String storeName) {
     return _vouchers
         .where((voucher) =>
-    voucher.storeName?.toLowerCase().contains(storeName.toLowerCase()) == true)
+            voucher.storeName.toLowerCase().contains(storeName.toLowerCase()) == true)
         .toList();
   }
 
@@ -124,6 +142,7 @@ class VoucherProvider with ChangeNotifier {
       'usedValue': _vouchers
           .where((v) => v.isUsed)
           .fold(0.0, (sum, v) => sum + v.depositValue),
+      'lifetimeCredit': lifetimeCredit,
     };
   }
 }
