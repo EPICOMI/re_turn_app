@@ -29,7 +29,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => VoucherProvider(),
+      create: (context) => VoucherProvider(databaseHelper: DatabaseHelper.instance),
       child: MaterialApp(
         title: 'Re-Turn Digital',
         theme: ThemeData(

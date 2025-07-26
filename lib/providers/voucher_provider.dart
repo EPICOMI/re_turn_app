@@ -6,6 +6,7 @@ class VoucherProvider with ChangeNotifier {
   List<Voucher> _vouchers = [];
   double _totalValue = 0.0;
   bool _isLoading = false;
+  final DatabaseHelper databaseHelper;
 
   List<Voucher> get vouchers => _vouchers;
   List<Voucher> get activeVouchers =>
@@ -15,7 +16,8 @@ class VoucherProvider with ChangeNotifier {
   double get totalValue => _totalValue;
   bool get isLoading => _isLoading;
 
-  VoucherProvider() {
+  VoucherProvider({DatabaseHelper? databaseHelper})
+      : databaseHelper = databaseHelper ?? DatabaseHelper.instance {
     loadVouchers();
   }
 

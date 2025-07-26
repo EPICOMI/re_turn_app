@@ -2,9 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:re_turn_app/models/voucher.dart';
 import 'package:re_turn_app/providers/voucher_provider.dart';
 import 'package:mockito/mockito.dart';
-import 'package:re_turn_app/database/database_helper.dart';
-
-class MockDatabaseHelper extends Mock implements DatabaseHelper {}
+import 'database_helper.mocks.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -14,8 +12,7 @@ void main() {
 
     setUp(() {
       mockDatabaseHelper = MockDatabaseHelper();
-      DatabaseHelper.instance = mockDatabaseHelper;
-      voucherProvider = VoucherProvider();
+      voucherProvider = VoucherProvider(databaseHelper: mockDatabaseHelper);
     });
 
     test('deleteOldVouchers should remove vouchers older than 7 days', () async {
