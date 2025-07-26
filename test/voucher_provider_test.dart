@@ -45,6 +45,8 @@ void main() {
       when(mockDatabaseHelper.getAllVouchers()).thenAnswer((_) async => [oldVoucher, newVoucher]);
       when(mockDatabaseHelper.getTotalDepositValue()).thenAnswer((_) async => 3.0);
       when(mockDatabaseHelper.deleteVoucher(1)).thenAnswer((_) async => 1);
+      when(mockDatabaseHelper.getUnusedVouchers()).thenAnswer((_) async => []);
+
 
       await voucherProvider.loadVouchers();
 
