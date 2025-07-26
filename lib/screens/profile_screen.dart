@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:re_turn_app/providers/voucher_provider.dart';
 import 'package:re_turn_app/widgets/voucher_card.dart';
 
+import '../models/voucher.dart';
+
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -10,8 +12,33 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
+// sorting enum
+enum SortOption {
+  depositLowToHigh,
+  depositHighToLow,
+  dateOldestToNewest,
+  dateNewestToOldest,
+}
+
+// sorting extensions for display names
+extension SortOptionExtension on SortOption {
+  String get displayName {
+    switch (this) {
+      case SortOption.depositLowToHigh:
+        return 'Deposit (low to high)';
+      case SortOption.depositHighToLow:
+        return 'Deposit (high to low)';
+      case SortOption.dateOldestToNewest:
+        return 'Date (oldest first)';
+      case SortOption.dateNewestToOldest:
+        return 'Date (newest first)';
+    }
+  }
+}
+
 class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  SortOption _sortOption = SortOption.dateNewestToOldest;
 
   @override
   void initState() {
@@ -207,17 +234,97 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        await provider.loadVouchers();
-      },
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        itemCount: vouchers.length,
-        itemBuilder: (context, index) {
-          return VoucherCard(voucher: vouchers[index]);
-        },
-      ),
+    // Sort the vouchers based on _sortOption
+    List<Voucher> sortedVouchers = List.from(vouchers);
+    switch (_sortOption) {
+      case SortOption.depositLowToHigh:
+        sortedVouchers.sort((a, b) => a.depositValue.compareTo(b.depositValue));
+        break;
+      case SortOption.depositHighToLow:
+        sortedVouchers.sort((a, b) => b.depositValue.compareTo(a.depositValue));
+        break;
+      case SortOption.dateOldestToNewest:
+        sortedVouchers.sort((a, b) => a.dateCreated.compareTo(b.dateCreated));
+        break;
+      case SortOption.dateNewestToOldest:
+        sortedVouchers.sort((a, b) => b.dateCreated.compareTo(a.dateCreated));
+        break;
+    }
+
+    return Column(
+      children: [
+        // Add sorting dropdown above the list
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: Row(
+            children: [
+              Text(
+                'Sort by',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(width: 8),
+              PopupMenuButton<SortOption>(
+                initialValue: _sortOption,
+                onSelected: (SortOption option) {
+                  setState(() {
+                    _sortOption = option;
+                  });
+                },
+                itemBuilder: (BuildContext context) => <PopupMenuEntry<SortOption>>[
+                  const PopupMenuItem<SortOption>(
+                    value: SortOption.depositLowToHigh,
+                    child: Text('Deposit Value (low to high)'),
+                  ),
+                  const PopupMenuItem<SortOption>(
+                    value: SortOption.depositHighToLow,
+                    child: Text('Deposit Value (high to low)'),
+                  ),
+                  const PopupMenuItem<SortOption>(
+                    value: SortOption.dateOldestToNewest,
+                    child: Text('Date (oldest to newest)'),
+                  ),
+                  const PopupMenuItem<SortOption>(
+                    value: SortOption.dateNewestToOldest,
+                    child: Text('Date (newest to oldest)'),
+                  ),
+                ],
+                child: Row(
+                  children: [
+                    Text(
+                      _sortOption.displayName,
+                      style: TextStyle(
+                        color: Theme.of(context).primaryColor,
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_drop_down,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Use Expanded to ensure ListView takes remaining space and scrolls properly
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: () async {
+              await provider.loadVouchers();
+            },
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              itemCount: sortedVouchers.length,
+              itemBuilder: (context, index) {
+                return VoucherCard(voucher: sortedVouchers[index]);
+              },
+            ),
+          ),
+        ),
+      ],
     );
   }
 
