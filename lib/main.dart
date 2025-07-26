@@ -54,8 +54,11 @@ class MainNavigationScreen extends StatefulWidget {
   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
 }
 
+import 'dart:async';
+
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _selectedIndex = 0;
+  Timer? _timer;
 
   final List<Widget> _screens = [
     const HomeScreen(),
@@ -66,6 +69,27 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _startVoucherCleanupTimer();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _startVoucherCleanupTimer() {
+    // Run the cleanup task every 24 hours
+    _timer = Timer.periodic(const Duration(hours: 24), (timer) {
+      final voucherProvider =
+          Provider.of<VoucherProvider>(context, listen: false);
+      voucherProvider.deleteOldVouchers();
     });
   }
 

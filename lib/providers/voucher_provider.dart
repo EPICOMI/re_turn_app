@@ -110,6 +110,22 @@ class VoucherProvider with ChangeNotifier {
         .toList();
   }
 
+  // Delete old used vouchers
+  Future<void> deleteOldVouchers() async {
+    try {
+      final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
+      final oldVouchers = _vouchers
+          .where((v) => v.isUsed && v.usedDate!.isBefore(sevenDaysAgo))
+          .toList();
+
+      for (final voucher in oldVouchers) {
+        await deleteVoucher(voucher.id!);
+      }
+    } catch (e) {
+      debugPrint('Error deleting old vouchers: $e');
+    }
+  }
+
   // Get statistics
   Map<String, dynamic> getStatistics() {
     final total = _vouchers.length;

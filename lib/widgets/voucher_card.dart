@@ -463,15 +463,20 @@ class VoucherDetailsSheet extends StatelessWidget {
                 Navigator.pop(context); // Close dialog
                 Navigator.pop(context); // Close bottom sheet
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      success
-                          ? 'Voucher marked as used'
-                          : 'Failed to mark voucher as used',
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Voucher marked as used. It will be deleted in 7 days.'),
+                      duration: Duration(seconds: 5),
                     ),
-                  ),
-                );
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Failed to mark voucher as used'),
+                    ),
+                  );
+                }
               }
             },
             child: const Text('Mark Used'),
