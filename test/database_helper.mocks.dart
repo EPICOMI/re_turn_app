@@ -42,4 +42,12 @@ class MockDatabaseHelper extends Mock implements DatabaseHelper {
       returnValue: Future.value(1),
     );
   }
+
+  @override
+  Future<List<Voucher>> getUnusedVouchers() {
+    return super.noSuchMethod(
+      Invocation.method(#getUnusedVouchers, []),
+      returnValue: Future.value(<Voucher>[]),
+    );
+  }
 }
