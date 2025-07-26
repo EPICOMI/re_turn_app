@@ -3,15 +3,13 @@ import 'package:re_turn_app/models/voucher.dart';
 import 'package:re_turn_app/providers/voucher_provider.dart';
 import 'package:mockito/mockito.dart';
 import 'database_helper.mocks.dart';
-
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   sqfliteFfiInit();
   databaseFactory = databaseFactoryFfi;
-
-import 'package:shared_preferences/shared_preferences.dart';
 
   group('VoucherProvider', () {
     late VoucherProvider voucherProvider;
