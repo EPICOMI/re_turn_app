@@ -4,18 +4,10 @@ import 'package:re_turn_app/models/voucher.dart';
 
 class MockDatabaseHelper extends Mock implements DatabaseHelper {
   @override
-  Future<Voucher> createVoucher(Voucher voucher) {
+  Future<int> createVoucher(Voucher voucher) {
     return super.noSuchMethod(
       Invocation.method(#createVoucher, [voucher]),
-      returnValue: Future.value(
-        Voucher(
-          id: 1,
-          barcode: '123',
-          depositValue: 1.0,
-          storeName: 'Test Store',
-          dateCreated: DateTime.now(),
-        ),
-      ),
+      returnValue: Future.value(1),
     );
   }
 
