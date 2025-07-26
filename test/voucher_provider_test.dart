@@ -11,11 +11,14 @@ void main() {
   sqfliteFfiInit();
   databaseFactory = databaseFactoryFfi;
 
+import 'package:shared_preferences/shared_preferences.dart';
+
   group('VoucherProvider', () {
     late VoucherProvider voucherProvider;
     late MockDatabaseHelper mockDatabaseHelper;
 
     setUp(() {
+      SharedPreferences.setMockInitialValues({});
       mockDatabaseHelper = MockDatabaseHelper();
       voucherProvider = VoucherProvider(databaseHelper: mockDatabaseHelper);
     });
