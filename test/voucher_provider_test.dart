@@ -4,8 +4,13 @@ import 'package:re_turn_app/providers/voucher_provider.dart';
 import 'package:mockito/mockito.dart';
 import 'database_helper.mocks.dart';
 
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  sqfliteFfiInit();
+  databaseFactory = databaseFactoryFfi;
+
   group('VoucherProvider', () {
     late VoucherProvider voucherProvider;
     late MockDatabaseHelper mockDatabaseHelper;
