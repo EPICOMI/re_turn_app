@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:barcode_widget/barcode_widget.dart';
 import 'package:re_turn_app/models/voucher.dart';
 import 'package:re_turn_app/providers/voucher_provider.dart';
+import 'package:gal/gal.dart';
+import 'package:share_plus/share_plus.dart';
+import 'dart:ui' as ui;
+import 'dart:io';
+import 'dart:typed_data';
 
 class VoucherCard extends StatelessWidget {
   final Voucher voucher;
@@ -225,10 +232,69 @@ class VoucherCard extends StatelessWidget {
   }
 }
 
-class VoucherDetailsSheet extends StatelessWidget {
+class VoucherDetailsSheet extends StatefulWidget {
   final Voucher voucher;
 
   const VoucherDetailsSheet({super.key, required this.voucher});
+
+  @override
+  _VoucherDetailsSheetState createState() => _VoucherDetailsSheetState();
+}
+
+class _VoucherDetailsSheetState extends State<VoucherDetailsSheet> {
+  final _barcodeKey = GlobalKey();
+
+  Future<Uint8List?> _captureBarcode() async {
+    try {
+      RenderRepaintBoundary boundary = _barcodeKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      return byteData?.buffer.asUint8List();
+    } catch (e) {
+      print('Error capturing barcode: $e');
+      return null;
+    }
+  }
+
+  void _downloadBarcode() async {
+    final imageData = await _captureBarcode();
+    if (imageData != null) {
+      try {
+        await Gal.putImageBytes(imageData);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Saved Successfully')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save barcode: $e')),
+        );
+      }
+    }
+  }
+
+  void _shareBarcode() async {
+    final imageData = await _captureBarcode();
+    if (imageData != null) {
+      try {
+        final tempDir = await getTemporaryDirectory();
+        final file = await File('${tempDir.path}/barcode_${DateTime.now().millisecondsSinceEpoch}.png').create();
+        await file.writeAsBytes(imageData);
+        final xFile = XFile(file.path, mimeType: 'image/png', name: 'barcode.png');
+        final box = context.findRenderObject() as RenderBox?;
+        await SharePlus.instance.share(
+          ShareParams(
+            text: 'Re-Turn Voucher Barcode',
+            files: [xFile],
+            sharePositionOrigin: box != null ? box.localToGlobal(Offset.zero) & box.size : null,
+          ),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error sharing barcode: $e')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -271,7 +337,7 @@ class VoucherDetailsSheet extends StatelessWidget {
                         style: Theme.of(context).textTheme.headlineSmall,
                       ),
                       Text(
-                        '€${voucher.depositValue.toStringAsFixed(2)} deposit',
+                        '€${widget.voucher.depositValue.toStringAsFixed(2)} deposit',
                         style: TextStyle(
                           fontSize: 16,
                           color: Theme.of(context).primaryColor,
@@ -293,7 +359,27 @@ class VoucherDetailsSheet extends StatelessWidget {
                           ],
                         ),
                       ),
-                      if (!voucher.isUsed)
+                      const PopupMenuItem(
+                        value: 'download',
+                        child: Row(
+                          children: [
+                            Icon(Icons.download),
+                            SizedBox(width: 8),
+                            Text('Download'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'share',
+                        child: Row(
+                          children: [
+                            Icon(Icons.share),
+                            SizedBox(width: 8),
+                            Text('Share'),
+                          ],
+                        ),
+                      ),
+                      if (!widget.voucher.isUsed)
                         const PopupMenuItem(
                           value: 'mark_used',
                           child: Row(
@@ -337,7 +423,7 @@ class VoucherDetailsSheet extends StatelessWidget {
                       height: 80,
                       child: BarcodeWidget(
                         barcode: Barcode.code128(),
-                        data: voucher.barcode,
+                        data: widget.voucher.barcode,
                         drawText: false,
                         color: Colors.black,
                         backgroundColor: Colors.transparent,
@@ -345,7 +431,7 @@ class VoucherDetailsSheet extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     SelectableText(
-                      voucher.barcode,
+                      widget.voucher.barcode,
                       style: const TextStyle(
                         fontFamily: 'monospace',
                         fontSize: 14,
@@ -359,22 +445,22 @@ class VoucherDetailsSheet extends StatelessWidget {
               const SizedBox(height: 24),
 
               // Details
-              _buildDetailRow('Store', voucher.storeName ?? 'Unknown'),
-              if (voucher.storeLocation != null)
-                _buildDetailRow('Location', voucher.storeLocation!),
-              _buildDetailRow('Created', dateFormat.format(voucher.dateCreated)),
-              if (voucher.isUsed && voucher.usedDate != null)
-                _buildDetailRow('Used', dateFormat.format(voucher.usedDate!)),
+              _buildDetailRow('Store', widget.voucher.storeName ?? 'Unknown'),
+              if (widget.voucher.storeLocation != null)
+                _buildDetailRow('Location', widget.voucher.storeLocation!),
+              _buildDetailRow('Created', dateFormat.format(widget.voucher.dateCreated)),
+              if (widget.voucher.isUsed && widget.voucher.usedDate != null)
+                _buildDetailRow('Used', dateFormat.format(widget.voucher.usedDate!)),
               _buildDetailRow(
                 'Status',
-                voucher.isUsed ? 'Used' : 'Active',
-                valueColor: voucher.isUsed ? Colors.grey[600] : Colors.green[700],
+                widget.voucher.isUsed ? 'Used' : 'Active',
+                valueColor: widget.voucher.isUsed ? Colors.grey[600] : Colors.green[700],
               ),
 
               const Spacer(),
 
               // Action Button
-              if (!voucher.isUsed)
+              if (!widget.voucher.isUsed)
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -427,7 +513,7 @@ class VoucherDetailsSheet extends StatelessWidget {
   void _handleMenuAction(BuildContext context, String action) {
     switch (action) {
       case 'copy':
-        Clipboard.setData(ClipboardData(text: voucher.barcode));
+        Clipboard.setData(ClipboardData(text: widget.voucher.barcode));
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Barcode copied to clipboard')),
         );
@@ -447,7 +533,7 @@ class VoucherDetailsSheet extends StatelessWidget {
       builder: (context) => AlertDialog(
         title: const Text('Mark as Used'),
         content: Text(
-            'Are you sure you want to mark this €${voucher.depositValue.toStringAsFixed(2)} voucher as used?'
+            'Are you sure you want to mark this €${widget.voucher.depositValue.toStringAsFixed(2)} voucher as used?'
         ),
         actions: [
           TextButton(
@@ -457,7 +543,7 @@ class VoucherDetailsSheet extends StatelessWidget {
           ElevatedButton(
             onPressed: () async {
               final provider = Provider.of<VoucherProvider>(context, listen: false);
-              final success = await provider.markVoucherAsUsed(voucher.id!);
+              final success = await provider.markVoucherAsUsed(widget.voucher.id!);
 
               if (context.mounted) {
                 Navigator.pop(context); // Close dialog
@@ -495,7 +581,7 @@ class VoucherDetailsSheet extends StatelessWidget {
           ElevatedButton(
             onPressed: () async {
               final provider = Provider.of<VoucherProvider>(context, listen: false);
-              final success = await provider.deleteVoucher(voucher.id!);
+              final success = await provider.deleteVoucher(widget.voucher.id!);
 
               if (context.mounted) {
                 Navigator.pop(context); // Close dialog

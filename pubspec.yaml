@@ -44,7 +44,6 @@ dependencies:
   path: ^1.8.3
 
   # Barcode functionality
-  flutter_barcode_scanner: ^2.0.0
   barcode_widget: ^2.0.4
   qr_flutter: ^4.1.0
 
@@ -66,6 +65,13 @@ dependencies:
 
   # File handling
   path_provider: ^2.1.1
+
+  # Image Downloading
+  gal: ^2.3.2
+
+  # Share Files
+  share_plus: ^11.0.0
+  mobile_scanner: ^7.0.1
 
 dev_dependencies:
   flutter_test:
