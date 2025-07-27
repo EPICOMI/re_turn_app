@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:re_turn_app/models/voucher.dart';
 import 'package:re_turn_app/providers/voucher_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key});
@@ -25,6 +28,7 @@ class _ScanScreenState extends State<ScanScreen> {
   bool _isManualEntry = false;
   Position? _currentPosition;
   String? _currentAddress;
+  DateTime? _receiptDateTime;
 
   @override
   void initState() {
@@ -114,21 +118,21 @@ class _ScanScreenState extends State<ScanScreen> {
             if (!_isManualEntry) ...[
               // Scanner Buttons
               _buildScanButton(
-                'Scan Barcode',
-                Icons.qr_code_scanner,
-                _scanBarcode,
+                'Scan Receipt',
+                Icons.camera_alt,
+                    () => _processImage(ImageSource.camera),
                 isPrimary: true,
               ),
               const SizedBox(height: 12),
               _buildScanButton(
-                'Scan from Photo',
+                'Import from Gallery',
                 Icons.photo_library,
-                _scanFromPhoto,
+                    () => _processImage(ImageSource.gallery),
               ),
               const SizedBox(height: 24),
             ],
 
-            // Manual Entry Form
+// Manual Entry Form
             if (_isManualEntry || _barcodeController.text.isNotEmpty) ...[
               Form(
                 key: _formKey,
@@ -143,7 +147,7 @@ class _ScanScreenState extends State<ScanScreen> {
                         hintText: 'Enter or scan barcode',
                         prefixIcon: const Icon(Icons.qr_code),
                         suffixIcon: IconButton(
-                          onPressed: _scanBarcode,
+                          onPressed: () => _processImage(ImageSource.camera),
                           icon: const Icon(Icons.qr_code_scanner),
                         ),
                         border: const OutlineInputBorder(),
@@ -256,6 +260,48 @@ class _ScanScreenState extends State<ScanScreen> {
                         ),
                       ),
 
+                    // Receipt Date/Time Display
+                    if (_receiptDateTime != null)
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.calendar_today,
+                              color: Colors.blue[700],
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Receipt Date/Time',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.blue[700],
+                                    ),
+                                  ),
+                                  Text(
+                                    DateFormat('MMM dd, yyyy • HH:mm').format(_receiptDateTime!),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.blue[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
                     const SizedBox(height: 24),
 
                     // Save Button
@@ -309,7 +355,7 @@ class _ScanScreenState extends State<ScanScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      '1. Scan the barcode on your re-turn receipt\n'
+                          '1. Scan the barcode on your re-turn receipt\n'
                           '2. Enter the deposit value shown on the receipt\n'
                           '3. Optionally add store name and location\n'
                           '4. Save to your digital voucher collection',
@@ -349,7 +395,7 @@ class _ScanScreenState extends State<ScanScreen> {
           ),
         )
             : Icon(icon),
-        label: Text(_isScanning ? 'Scanning...' : title),
+        label: Text(_isScanning ? 'Processing...' : title),
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
@@ -371,31 +417,58 @@ class _ScanScreenState extends State<ScanScreen> {
     );
   }
 
-  Future<void> _scanBarcode() async {
+  Future<void> _processImage(ImageSource source) async {
     try {
       setState(() {
         _isScanning = true;
       });
 
-      String barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
-        '#ff6666',
-        'Cancel',
-        true,
-        ScanMode.BARCODE,
-      );
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(source: source);
 
-      if (barcodeScanRes != '-1' && mounted) {
-        _barcodeController.text = barcodeScanRes;
-        setState(() {
-          _isManualEntry = true;
-        });
+      if (image != null && mounted) {
+        final inputImage = InputImage.fromFilePath(image.path);
 
-        // Focus on deposit field after successful scan
-        FocusScope.of(context).nextFocus();
+        // Barcode Scanning
+        final barcodeScanner = BarcodeScanner(formats: [BarcodeFormat.all]);
+        final barcodes = await barcodeScanner.processImage(inputImage);
+        if (barcodes.isNotEmpty && mounted) {
+          _barcodeController.text = barcodes.first.rawValue ?? '';
+          _showSuccessSnackBar('Barcode scanned successfully!');
+        }
+
+        // Text Recognition
+        final textRecognizer = TextRecognizer();
+        final recognizedText = await textRecognizer.processImage(inputImage);
+        final extractedData = _parseReceiptText(recognizedText.text);
+
+        // Populate fields
+        _depositController.text = extractedData['deposit'] ?? '';
+        _storeNameController.text = extractedData['store'] ?? '';
+        _storeLocationController.text = extractedData['location'] ?? '';
+        _receiptDateTime = extractedData['dateTime'] != null
+            ? DateTime.tryParse(extractedData['dateTime']!)
+            : null;
+
+        // Save creation time to shared_preferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('last_voucher_creation_time', DateTime.now().toIso8601String());
+
+        if (barcodes.isEmpty && recognizedText.text.isEmpty) {
+          _showErrorSnackBar('No barcode or text detected in the image.');
+        } else {
+          setState(() {
+            _isManualEntry = true;
+          });
+          FocusScope.of(context).nextFocus();
+        }
+
+        await barcodeScanner.close();
+        await textRecognizer.close();
       }
     } catch (e) {
       if (mounted) {
-        _showErrorSnackBar('Error scanning barcode: ${e.toString()}');
+        _showErrorSnackBar('Error processing image: ${e.toString()}');
       }
     } finally {
       if (mounted) {
@@ -406,30 +479,59 @@ class _ScanScreenState extends State<ScanScreen> {
     }
   }
 
-  Future<void> _scanFromPhoto() async {
-    try {
-      final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+  Map<String, String> _parseReceiptText(String text) {
+    final lines = text.split('\n');
+    final data = <String, String>{};
+    final datePatterns = [
+      RegExp(r'\d{2}/\d{2}/\d{4}\s+\d{2}:\d{2}'), // DD/MM/YYYY HH:MM
+      RegExp(r'\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}'), // YYYY-MM-DD HH:MM
+      RegExp(r'\d{2}-\d{2}-\d{4}\s+\d{2}:\d{2}'), // DD-MM-YYYY HH:MM
+    ];
+    final storeNames = ['lidl', 'tesco', 'supervalu', 'aldi', 'dunnes', 'centra', 'spar'];
 
-      if (image != null && mounted) {
-        // Note: flutter_barcode_scanner doesn't support image scanning
-        // This would require a different package or image processing library
-        _showInfoSnackBar('Photo scanning not yet implemented. Please enter barcode manually.');
-        setState(() {
-          _isManualEntry = true;
-        });
+    for (final line in lines) {
+      final lowerLine = line.toLowerCase().trim();
+      // Date/Time
+      for (final pattern in datePatterns) {
+        final match = pattern.firstMatch(line);
+        if (match != null) {
+          data['dateTime'] = match.group(0)!;
+          break;
+        }
       }
-    } catch (e) {
-      if (mounted) {
-        _showErrorSnackBar('Error selecting photo: ${e.toString()}');
+      // Store Name
+      if (storeNames.any((store) => lowerLine.contains(store))) {
+        data['store'] = storeNames.firstWhere((store) => lowerLine.contains(store));
+      } else if (lowerLine.contains('store')) {
+        final parts = line.split(':');
+        if (parts.length > 1) data['store'] = parts[1].trim();
+      }
+      // Location
+      if (lowerLine.contains('address') || lowerLine.contains('location')) {
+        final parts = line.split(':');
+        if (parts.length > 1) {
+          data['location'] = parts[1].trim();
+        } else {
+          data['location'] = line.trim();
+        }
+      }
+      // Deposit Value
+      if (lowerLine.contains('deposit') || lowerLine.contains('re-turn') || lowerLine.contains('total')) {
+        final match = RegExp(r'€?\s*\d+\.\d{2}').firstMatch(line);
+        if (match != null) {
+          data['deposit'] = match.group(0)!.replaceAll('€', '').trim();
+        }
       }
     }
+
+    return data;
   }
 
   Future<void> _getCurrentLocation() async {
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
+        _showInfoSnackBar('Location services are disabled.');
         return;
       }
 
@@ -437,11 +539,13 @@ class _ScanScreenState extends State<ScanScreen> {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
+          _showInfoSnackBar('Location permissions denied.');
           return;
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
+        _showInfoSnackBar('Location permissions permanently denied.');
         return;
       }
 
@@ -464,6 +568,9 @@ class _ScanScreenState extends State<ScanScreen> {
       }
     } catch (e) {
       debugPrint('Error getting location: $e');
+      if (mounted) {
+        _showErrorSnackBar('Error getting location: ${e.toString()}');
+      }
     }
   }
 
@@ -493,6 +600,7 @@ class _ScanScreenState extends State<ScanScreen> {
       storeName: storeName,
       storeLocation: storeLocation,
       dateCreated: DateTime.now(),
+      receiptDateTime: _receiptDateTime,
       latitude: _currentPosition?.latitude,
       longitude: _currentPosition?.longitude,
     );
@@ -523,6 +631,7 @@ class _ScanScreenState extends State<ScanScreen> {
     _storeLocationController.clear();
     setState(() {
       _isManualEntry = false;
+      _receiptDateTime = null;
     });
   }
 

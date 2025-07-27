@@ -445,12 +445,18 @@ class _VoucherDetailsSheetState extends State<VoucherDetailsSheet> {
               const SizedBox(height: 24),
 
               // Details
+              _buildDetailRow('Barcode', widget.voucher.barcode),
               _buildDetailRow('Store', widget.voucher.storeName ?? 'Unknown'),
               if (widget.voucher.storeLocation != null)
                 _buildDetailRow('Location', widget.voucher.storeLocation!),
               _buildDetailRow('Created', dateFormat.format(widget.voucher.dateCreated)),
               if (widget.voucher.isUsed && widget.voucher.usedDate != null)
                 _buildDetailRow('Used', dateFormat.format(widget.voucher.usedDate!)),
+              if (widget.voucher.receiptDateTime != null)
+                _buildDetailRow(
+                  'Receipt Date',
+                  DateFormat('MMMM dd, yyyy • HH:mm').format(widget.voucher.receiptDateTime!),
+                ),
               _buildDetailRow(
                 'Status',
                 widget.voucher.isUsed ? 'Used' : 'Active',

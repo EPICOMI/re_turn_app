@@ -39,6 +39,7 @@ class DatabaseHelper {
         store_name $textType,
         store_location TEXT,
         date_created $textType,
+        receipt_date_time TEXT,
         is_used INTEGER DEFAULT 0,
         used_date TEXT,
         latitude REAL,
