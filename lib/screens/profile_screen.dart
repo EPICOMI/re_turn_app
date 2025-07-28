@@ -409,15 +409,14 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       builder: (context) =>
           Container(
             padding: const EdgeInsets.all(24.0),
-            child: ListView(
-              shrinkWrap: true,
+            child: Wrap(
+              runSpacing: 12,
               children: [
                 // Handle
                 Center(
                   child: Container(
                     width: 50,
                     height: 4,
-                    margin: const EdgeInsets.symmetric(vertical: 12.0),
                     decoration: BoxDecoration(
                       color: Colors.grey[300],
                       borderRadius: BorderRadius.circular(2),
