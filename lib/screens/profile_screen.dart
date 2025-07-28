@@ -406,87 +406,87 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 12),
-          // Handle
-          Center(
-            child: Container(
-              width: 50,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24.0),
+        child: Wrap(
+          direction: Axis.vertical,
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            // Handle
+            Center(
+              child: Container(
+                width: 50,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 24),
 
-          Text(
-            'Settings',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 24),
+            Text(
+              'Settings',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
 
-          // Settings Options
-          _buildSettingsTile(
-            Icons.notifications,
-            'Notifications',
-            'Manage notification preferences',
-            () {
-              Navigator.pop(context);
-              _showComingSoonSnackBar(context, 'Notifications');
-            },
-          ),
-          _buildSettingsTile(
-            Icons.location_on,
-            'Location Services',
-            'Auto-detect store locations',
-            () {
-              Navigator.pop(context);
-              _showComingSoonSnackBar(context, 'Location Services');
-            },
-          ),
-          _buildSettingsTile(
-            Icons.backup,
-            'Backup & Sync',
-            'Backup vouchers to cloud',
-            () {
-              Navigator.pop(context);
-              _showComingSoonSnackBar(context, 'Backup & Sync');
-            },
-          ),
-          _buildSettingsTile(
-            Icons.help,
-            'Help & Support',
-            'Get help and contact support',
-            () {
-              Navigator.pop(context);
-              _showAboutDialog(context);
-            },
-          ),
-          _buildSettingsTile(
-            Icons.bar_chart,
-            'Lifetime Stats',
-            'See your lifetime recycling statistics',
-            () {
-              Navigator.pop(context);
-              _showLifetimeStatsDialog(context);
-            },
-          ),
-          _buildSettingsTile(
-            Icons.info,
-            'About',
-            'App version and information',
-            () {
-              Navigator.pop(context);
-              _showAboutDialog(context);
-            },
-          ),
-
-          const SizedBox(height: 24),
-        ],
+            // Settings Options
+            _buildSettingsTile(
+              Icons.notifications,
+              'Notifications',
+              'Manage notification preferences',
+              () {
+                Navigator.pop(context);
+                _showComingSoonSnackBar(context, 'Notifications');
+              },
+            ),
+            _buildSettingsTile(
+              Icons.location_on,
+              'Location Services',
+              'Auto-detect store locations',
+              () {
+                Navigator.pop(context);
+                _showComingSoonSnackBar(context, 'Location Services');
+              },
+            ),
+            _buildSettingsTile(
+              Icons.backup,
+              'Backup & Sync',
+              'Backup vouchers to cloud',
+              () {
+                Navigator.pop(context);
+                _showComingSoonSnackBar(context, 'Backup & Sync');
+              },
+            ),
+            _buildSettingsTile(
+              Icons.help,
+              'Help & Support',
+              'Get help and contact support',
+              () {
+                Navigator.pop(context);
+                _showAboutDialog(context);
+              },
+            ),
+            _buildSettingsTile(
+              Icons.bar_chart,
+              'Lifetime Stats',
+              'See your lifetime recycling statistics',
+              () {
+                Navigator.pop(context);
+                _showLifetimeStatsDialog(context);
+              },
+            ),
+            _buildSettingsTile(
+              Icons.info,
+              'About',
+              'App version and information',
+              () {
+                Navigator.pop(context);
+                _showAboutDialog(context);
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
