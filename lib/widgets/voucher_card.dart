@@ -503,37 +503,40 @@ class _VoucherDetailsSheetState extends State<VoucherDetailsSheet> {
               const SizedBox(height: 24),
 
               // Barcode Display
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: Colors.grey[300]!),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  children: [
-                    // Barcode Widget
-                    SizedBox(
-                      height: 80,
-                      child: BarcodeWidget(
-                        barcode: Barcode.code128(),
-                        data: widget.voucher.barcode,
-                        drawText: false,
-                        color: Colors.black,
-                        backgroundColor: Colors.transparent,
+              RepaintBoundary(
+                key: _barcodeKey,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(color: Colors.grey[300]!),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      // Barcode Widget
+                      SizedBox(
+                        height: 80,
+                        child: BarcodeWidget(
+                          barcode: Barcode.code128(),
+                          data: widget.voucher.barcode,
+                          drawText: false,
+                          color: Colors.black,
+                          backgroundColor: Colors.transparent,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    SelectableText(
-                      widget.voucher.barcode,
-                      style: const TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                      const SizedBox(height: 12),
+                      SelectableText(
+                        widget.voucher.barcode,
+                        style: const TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
 
