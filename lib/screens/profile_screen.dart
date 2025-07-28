@@ -81,141 +81,117 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           ),
         ],
       ),
-      body: Consumer<VoucherProvider>(
-        builder: (context, voucherProvider, child) {
-          final stats = voucherProvider.getStatistics();
-
-          return Column(
-            children: [
-              // Profile Header
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(24.0),
-                decoration: BoxDecoration(
-                  color: Theme
-                      .of(context)
-                      .colorScheme
-                      .inversePrimary,
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(24),
-                    bottomRight: Radius.circular(24),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    // Avatar
-                    CircleAvatar(
-                      radius: 40,
-                      backgroundColor: Theme
-                          .of(context)
-                          .primaryColor,
-                      child: const Icon(
-                        Icons.person,
-                        size: 40,
-                        color: Colors.white,
+      body: NestedScrollView(
+        headerSliverBuilder: (context, innerBoxIsScrolled) {
+          return [
+            SliverAppBar(
+              automaticallyImplyLeading: false,
+              backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+              expandedHeight: 280,
+              floating: false,
+              pinned: true,
+              flexibleSpace: FlexibleSpaceBar(
+                background: Consumer<VoucherProvider>(
+                  builder: (context, voucherProvider, child) {
+                    final stats = voucherProvider.getStatistics();
+                    return Container(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Avatar
+                          CircleAvatar(
+                            radius: 40,
+                            backgroundColor: Theme.of(context).primaryColor,
+                            child: const Icon(
+                              Icons.person,
+                              size: 40,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          // User Info
+                          Text(
+                            'Re-Turn User',
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineSmall
+                                ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Eco-friendly recycler since ${DateTime.now().year}',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          // Quick Stats Row
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              _buildStatColumn(
+                                '${stats['total']}',
+                                'Total Vouchers',
+                                Icons.receipt_long,
+                              ),
+                              Container(
+                                height: 40,
+                                width: 1,
+                                color: Colors.grey[300],
+                              ),
+                              _buildStatColumn(
+                                '€${voucherProvider.totalValue.toStringAsFixed(2)}',
+                                'Available Credit',
+                                Icons.euro,
+                              ),
+                              Container(
+                                height: 40,
+                                width: 1,
+                                color: Colors.grey[300],
+                              ),
+                              _buildStatColumn(
+                                '${stats['used']}',
+                                'Used Vouchers',
+                                Icons.check_circle,
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // User Info
-                    Text(
-                      'Re-Turn User',
-                      style: Theme
-                          .of(context)
-                          .textTheme
-                          .headlineSmall
-                          ?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Eco-friendly recycler since ${DateTime
-                          .now()
-                          .year}',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Quick Stats Row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildStatColumn(
-                          '${stats['total']}',
-                          'Total Vouchers',
-                          Icons.receipt_long,
-                        ),
-                        Container(
-                          height: 40,
-                          width: 1,
-                          color: Colors.grey[300],
-                        ),
-                        _buildStatColumn(
-                          '€${voucherProvider.totalValue.toStringAsFixed(2)}',
-                          'Available Credit',
-                          Icons.euro,
-                        ),
-                        Container(
-                          height: 40,
-                          width: 1,
-                          color: Colors.grey[300],
-                        ),
-                        _buildStatColumn(
-                          '${stats['used']}',
-                          'Used Vouchers',
-                          Icons.check_circle,
-                        ),
-                      ],
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
-
-              // Tab Bar
-              Container(
-                color: Colors.grey[50],
-                child: TabBar(
-                  controller: _tabController,
-                  labelColor: Theme
-                      .of(context)
-                      .primaryColor,
-                  unselectedLabelColor: Colors.grey[600],
-                  indicatorColor: Theme
-                      .of(context)
-                      .primaryColor,
-                  tabs: const [
-                    Tab(text: 'All', icon: Icon(Icons.list)),
-                    Tab(text: 'Active',
-                        icon: Icon(Icons.radio_button_unchecked)),
-                    Tab(text: 'Used', icon: Icon(Icons.check_circle)),
-                  ],
-                ),
+              bottom: TabBar(
+                controller: _tabController,
+                labelColor: Theme.of(context).primaryColor,
+                unselectedLabelColor: Colors.grey[600],
+                indicatorColor: Theme.of(context).primaryColor,
+                tabs: const [
+                  Tab(text: 'All', icon: Icon(Icons.list)),
+                  Tab(text: 'Active', icon: Icon(Icons.radio_button_unchecked)),
+                  Tab(text: 'Used', icon: Icon(Icons.check_circle)),
+                ],
               ),
-
-              // Tab Content
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    // All Vouchers
-                    _buildVoucherList(
-                        voucherProvider.vouchers, voucherProvider),
-                    // Active Vouchers
-                    _buildVoucherList(
-                        voucherProvider.activeVouchers, voucherProvider),
-                    // Used Vouchers
-                    _buildVoucherList(
-                        voucherProvider.usedVouchers, voucherProvider),
-                  ],
-                ),
-              ),
-            ],
-          );
+            ),
+          ];
         },
+        body: Consumer<VoucherProvider>(
+          builder: (context, voucherProvider, child) {
+            return TabBarView(
+              controller: _tabController,
+              children: [
+                _buildVoucherList(voucherProvider.vouchers, voucherProvider),
+                _buildVoucherList(voucherProvider.activeVouchers, voucherProvider),
+                _buildVoucherList(voucherProvider.usedVouchers, voucherProvider),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -295,110 +271,108 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         break;
     }
 
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          // Add sorting dropdown above the list
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
+    return Column(
+      children: [
+        // Add sorting dropdown above the list
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
 
-                    Text(
-                      'Sort by',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
+                  Text(
+                    'Sort by',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
                     ),
-                    const SizedBox(width: 8),
-                    PopupMenuButton<SortOption>(
-                      initialValue: _sortOption,
-                      onSelected: (SortOption option) {
-                        setState(() {
-                          _sortOption = option;
-                        });
-                      },
-                      itemBuilder: (BuildContext context) =>
-                      <PopupMenuEntry<SortOption>>[
-                        const PopupMenuItem<SortOption>(
-                          value: SortOption.depositLowToHigh,
-                          child: Text('Deposit Value (low to high)'),
-                        ),
-                        const PopupMenuItem<SortOption>(
-                          value: SortOption.depositHighToLow,
-                          child: Text('Deposit Value (high to low)'),
-                        ),
-                        const PopupMenuItem<SortOption>(
-                          value: SortOption.dateOldestToNewest,
-                          child: Text('Date (oldest to newest)'),
-                        ),
-                        const PopupMenuItem<SortOption>(
-                          value: SortOption.dateNewestToOldest,
-                          child: Text('Date (newest to oldest)'),
-                        ),
-                      ],
-                      child: Row(
-                        children: [
-                          Text(
-                            _sortOption.displayName,
-                            style: TextStyle(
-                              color: Theme
-                                  .of(context)
-                                  .primaryColor,
-                            ),
-                          ),
-                          Icon(
-                            Icons.arrow_drop_down,
+                  ),
+                  const SizedBox(width: 8),
+                  PopupMenuButton<SortOption>(
+                    initialValue: _sortOption,
+                    onSelected: (SortOption option) {
+                      setState(() {
+                        _sortOption = option;
+                      });
+                    },
+                    itemBuilder: (BuildContext context) =>
+                    <PopupMenuEntry<SortOption>>[
+                      const PopupMenuItem<SortOption>(
+                        value: SortOption.depositLowToHigh,
+                        child: Text('Deposit Value (low to high)'),
+                      ),
+                      const PopupMenuItem<SortOption>(
+                        value: SortOption.depositHighToLow,
+                        child: Text('Deposit Value (high to low)'),
+                      ),
+                      const PopupMenuItem<SortOption>(
+                        value: SortOption.dateOldestToNewest,
+                        child: Text('Date (oldest to newest)'),
+                      ),
+                      const PopupMenuItem<SortOption>(
+                        value: SortOption.dateNewestToOldest,
+                        child: Text('Date (newest to oldest)'),
+                      ),
+                    ],
+                    child: Row(
+                      children: [
+                        Text(
+                          _sortOption.displayName,
+                          style: TextStyle(
                             color: Theme
                                 .of(context)
                                 .primaryColor,
                           ),
-                        ],
-                      ),
+                        ),
+                        Icon(
+                          Icons.arrow_drop_down,
+                          color: Theme
+                              .of(context)
+                              .primaryColor,
+                        ),
+                      ],
                     ),
+                  ),
+                ],
+              ),
+              // Filter button with text and icon
+              GestureDetector(
+                onTap: () => _showFilterDialog(),
+                child: Row(
+                  children: [
+                    Text(
+                      'Filter',
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(Icons.filter_list, color: Theme
+                        .of(context)
+                        .primaryColor),
                   ],
                 ),
-                // Filter button with text and icon
-                GestureDetector(
-                  onTap: () => _showFilterDialog(),
-                  child: Row(
-                    children: [
-                      Text(
-                        'Filter',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w500),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(Icons.filter_list, color: Theme
-                          .of(context)
-                          .primaryColor),
-                    ],
-                  ),
-                ),
-              ],
+              ),
+            ],
+          ),
+        ),
+        // Use Expanded to ensure ListView takes remaining space and scrolls properly
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: () async {
+              await provider.loadVouchers();
+            },
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              itemCount: sortedVouchers.length,
+              itemBuilder: (context, index) {
+                return VoucherCard(voucher: sortedVouchers[index]);
+              },
             ),
           ),
-          // Use Expanded to ensure ListView takes remaining space and scrolls properly
-          RefreshIndicator(
-              onRefresh: () async {
-                await provider.loadVouchers();
-              },
-              child: ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                itemCount: sortedVouchers.length,
-                itemBuilder: (context, index) {
-                  return VoucherCard(voucher: sortedVouchers[index]);
-                },
-              ),
-            ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
