@@ -13,6 +13,7 @@ import 'dart:ui' as ui;
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 
 class VoucherCard extends StatelessWidget {
   final Voucher voucher;
@@ -257,27 +258,81 @@ class _VoucherDetailsSheetState extends State<VoucherDetailsSheet> {
     }
   }
 
-  void _downloadBarcode() async {
-    if (Platform.isAndroid) {
-      final status = await Permission.storage.request();
-      if (!status.isGranted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Storage permission denied')),
-        );
-        return;
+  Future<bool> _requestStoragePermission() async {
+    if (!Platform.isAndroid) {
+      return true; // iOS doesn't require storage permissions for photo library
+    }
+
+    try {
+      final androidInfo = await DeviceInfoPlugin().androidInfo;
+      final sdkInt = androidInfo.version.sdkInt ?? 30; // Default to 30 if null
+      if (sdkInt > 29) {
+        return true; // No storage permission needed for API 30+
       }
+
+      final status = await Permission.storage.request();
+      if (status.isGranted) {
+        return true;
+      } else if (status.isPermanentlyDenied) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Storage permission is permanently denied. Please enable it in settings.'),
+              action: SnackBarAction(
+                label: 'Settings',
+                onPressed: () async {
+                  await openAppSettings();
+                },
+              ),
+            ),
+          );
+        }
+      } else if (status.isDenied || status.isRestricted) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Storage permission denied')),
+          );
+        }
+      }
+      return false;
+    } catch (e) {
+      print('Error checking Android SDK or permissions: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error checking permissions: $e')),
+        );
+      }
+      return false;
+    }
+  }
+
+  void _downloadBarcode() async {
+    if (!await _requestStoragePermission()) {
+      return;
     }
 
     final imageData = await _captureBarcode();
-    if (imageData != null) {
-      try {
-        await Gal.putImageBytes(imageData);
+    if (imageData == null) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Saved Successfully')),
+          const SnackBar(content: Text('Failed to capture barcode')),
         );
-      } catch (e) {
+      }
+      return;
+    }
+
+    try {
+      await Gal.putImageBytes(imageData);
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save barcode: $e')),
+          const SnackBar(content: Text('Barcode saved to gallery')),
+        );
+      }
+    } catch (e) {
+      print('Error saving barcode to gallery: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save barcode: ${e.toString().split('\n').first}')),
         );
       }
     }
@@ -285,24 +340,53 @@ class _VoucherDetailsSheetState extends State<VoucherDetailsSheet> {
 
   void _shareBarcode() async {
     final imageData = await _captureBarcode();
-    if (imageData != null) {
+    if (imageData == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to capture barcode')),
+        );
+      }
+      return;
+    }
+
+    try {
+      final tempDir = await getTemporaryDirectory();
+      final filePath = '${tempDir.path}/barcode_${DateTime.now().millisecondsSinceEpoch}.png';
+      final file = File(filePath);
+      await file.writeAsBytes(imageData);
+      if (!await file.exists()) {
+        throw Exception('Failed to create temporary file');
+      }
+      print('Temporary file created at: $filePath');
+
+      final xFile = XFile(file.path, mimeType: 'image/png', name: 'barcode.png');
+      final box = context.findRenderObject() as RenderBox?;
+      await SharePlus.instance.share(
+        ShareParams(
+          text: 'Re-Turn Voucher Barcode',
+          files: [xFile],
+          sharePositionOrigin: box != null ? box.localToGlobal(Offset.zero) & box.size : null,
+        ),
+      );
+      print('Share sheet opened successfully');
+    } catch (e) {
+      print('Error sharing barcode: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error sharing barcode: ${e.toString().split('\n').first}')),
+        );
+      }
+    } finally {
+      // Clean up temporary file
       try {
         final tempDir = await getTemporaryDirectory();
-        final file = await File('${tempDir.path}/barcode_${DateTime.now().millisecondsSinceEpoch}.png').create();
-        await file.writeAsBytes(imageData);
-        final xFile = XFile(file.path, mimeType: 'image/png', name: 'barcode.png');
-        final box = context.findRenderObject() as RenderBox?;
-        await SharePlus.instance.share(
-          ShareParams(
-            text: 'Re-Turn Voucher Barcode',
-            files: [xFile],
-            sharePositionOrigin: box != null ? box.localToGlobal(Offset.zero) & box.size : null,
-          ),
-        );
+        final file = File('${tempDir.path}/barcode_${DateTime.now().millisecondsSinceEpoch}.png');
+        if (await file.exists()) {
+          await file.delete();
+          print('Temporary file deleted');
+        }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error sharing barcode: $e')),
-        );
+        print('Error cleaning up temporary file: $e');
       }
     }
   }
