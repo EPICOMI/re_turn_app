@@ -8,7 +8,7 @@ plugins {
 android {
     namespace = "com.example.re_turn_app"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -31,10 +31,18 @@ android {
     }
 
     buildTypes {
-        release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+        getByName("release") {
+            // Signing with debug keys for testing purposes
             signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+        // Explicitly define debug build type for testing
+        getByName("debug") {
+            isMinifyEnabled = false
+            isShrinkResources = false
+            isDebuggable = true
         }
     }
 }

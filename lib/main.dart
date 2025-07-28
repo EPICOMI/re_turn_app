@@ -5,8 +5,8 @@ import 'package:re_turn_app/screens/home_screen.dart';
 import 'package:re_turn_app/screens/scan_screen.dart';
 import 'package:re_turn_app/screens/profile_screen.dart';
 import 'package:re_turn_app/database/database_helper.dart';
-import 'dart:io' show Platform;  // Add this import
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';  // Add this import
+import 'dart:io' show Platform;
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

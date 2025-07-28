@@ -438,7 +438,7 @@ class _ScanScreenState extends State<ScanScreen> {
         }
 
         // Text Recognition
-        final textRecognizer = TextRecognizer();
+        final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
         final recognizedText = await textRecognizer.processImage(inputImage);
         final extractedData = _parseReceiptText(recognizedText.text);
 

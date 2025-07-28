@@ -12,6 +12,7 @@ import 'package:share_plus/share_plus.dart';
 import 'dart:ui' as ui;
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:permission_handler/permission_handler.dart';
 
 class VoucherCard extends StatelessWidget {
   final Voucher voucher;
@@ -257,6 +258,16 @@ class _VoucherDetailsSheetState extends State<VoucherDetailsSheet> {
   }
 
   void _downloadBarcode() async {
+    if (Platform.isAndroid) {
+      final status = await Permission.storage.request();
+      if (!status.isGranted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Storage permission denied')),
+        );
+        return;
+      }
+    }
+
     final imageData = await _captureBarcode();
     if (imageData != null) {
       try {
@@ -523,6 +534,12 @@ class _VoucherDetailsSheetState extends State<VoucherDetailsSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Barcode copied to clipboard')),
         );
+        break;
+      case 'download':
+        _downloadBarcode();
+        break;
+      case 'share':
+        _shareBarcode();
         break;
       case 'mark_used':
         _markAsUsed(context);
