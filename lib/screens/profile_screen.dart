@@ -295,108 +295,110 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         break;
     }
 
-    return Column(
-      children: [
-        // Add sorting dropdown above the list
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Add sorting dropdown above the list
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
 
-                  Text(
-                    'Sort by',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
+                    Text(
+                      'Sort by',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  PopupMenuButton<SortOption>(
-                    initialValue: _sortOption,
-                    onSelected: (SortOption option) {
-                      setState(() {
-                        _sortOption = option;
-                      });
-                    },
-                    itemBuilder: (BuildContext context) =>
-                    <PopupMenuEntry<SortOption>>[
-                      const PopupMenuItem<SortOption>(
-                        value: SortOption.depositLowToHigh,
-                        child: Text('Deposit Value (low to high)'),
-                      ),
-                      const PopupMenuItem<SortOption>(
-                        value: SortOption.depositHighToLow,
-                        child: Text('Deposit Value (high to low)'),
-                      ),
-                      const PopupMenuItem<SortOption>(
-                        value: SortOption.dateOldestToNewest,
-                        child: Text('Date (oldest to newest)'),
-                      ),
-                      const PopupMenuItem<SortOption>(
-                        value: SortOption.dateNewestToOldest,
-                        child: Text('Date (newest to oldest)'),
-                      ),
-                    ],
-                    child: Row(
-                      children: [
-                        Text(
-                          _sortOption.displayName,
-                          style: TextStyle(
+                    const SizedBox(width: 8),
+                    PopupMenuButton<SortOption>(
+                      initialValue: _sortOption,
+                      onSelected: (SortOption option) {
+                        setState(() {
+                          _sortOption = option;
+                        });
+                      },
+                      itemBuilder: (BuildContext context) =>
+                      <PopupMenuEntry<SortOption>>[
+                        const PopupMenuItem<SortOption>(
+                          value: SortOption.depositLowToHigh,
+                          child: Text('Deposit Value (low to high)'),
+                        ),
+                        const PopupMenuItem<SortOption>(
+                          value: SortOption.depositHighToLow,
+                          child: Text('Deposit Value (high to low)'),
+                        ),
+                        const PopupMenuItem<SortOption>(
+                          value: SortOption.dateOldestToNewest,
+                          child: Text('Date (oldest to newest)'),
+                        ),
+                        const PopupMenuItem<SortOption>(
+                          value: SortOption.dateNewestToOldest,
+                          child: Text('Date (newest to oldest)'),
+                        ),
+                      ],
+                      child: Row(
+                        children: [
+                          Text(
+                            _sortOption.displayName,
+                            style: TextStyle(
+                              color: Theme
+                                  .of(context)
+                                  .primaryColor,
+                            ),
+                          ),
+                          Icon(
+                            Icons.arrow_drop_down,
                             color: Theme
                                 .of(context)
                                 .primaryColor,
                           ),
-                        ),
-                        Icon(
-                          Icons.arrow_drop_down,
-                          color: Theme
-                              .of(context)
-                              .primaryColor,
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              // Filter button with text and icon
-              GestureDetector(
-                onTap: () => _showFilterDialog(),
-                child: Row(
-                  children: [
-                    Text(
-                      'Filter',
-                      style: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w500),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(Icons.filter_list, color: Theme
-                        .of(context)
-                        .primaryColor),
                   ],
                 ),
-              ),
-            ],
-          ),
-        ),
-        // Use Expanded to ensure ListView takes remaining space and scrolls properly
-        Expanded(
-          child: RefreshIndicator(
-            onRefresh: () async {
-              await provider.loadVouchers();
-            },
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: sortedVouchers.length,
-              itemBuilder: (context, index) {
-                return VoucherCard(voucher: sortedVouchers[index]);
-              },
+                // Filter button with text and icon
+                GestureDetector(
+                  onTap: () => _showFilterDialog(),
+                  child: Row(
+                    children: [
+                      Text(
+                        'Filter',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(Icons.filter_list, color: Theme
+                          .of(context)
+                          .primaryColor),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-      ],
+          // Use Expanded to ensure ListView takes remaining space and scrolls properly
+          RefreshIndicator(
+              onRefresh: () async {
+                await provider.loadVouchers();
+              },
+              child: ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                itemCount: sortedVouchers.length,
+                itemBuilder: (context, index) {
+                  return VoucherCard(voucher: sortedVouchers[index]);
+                },
+              ),
+            ),
+        ],
+      ),
     );
   }
 

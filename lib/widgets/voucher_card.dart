@@ -403,14 +403,15 @@ class _VoucherDetailsSheetState extends State<VoucherDetailsSheet> {
       builder: (context, scrollController) {
         return Container(
           padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: ListView(
+            controller: scrollController,
             children: [
               // Handle
               Center(
                 child: Container(
                   width: 50,
                   height: 4,
+                  margin: const EdgeInsets.symmetric(vertical: 12.0),
                   decoration: BoxDecoration(
                     color: Colors.grey[300],
                     borderRadius: BorderRadius.circular(2),
@@ -418,124 +419,131 @@ class _VoucherDetailsSheetState extends State<VoucherDetailsSheet> {
                 ),
               ),
 
-              const SizedBox(height: 24),
-
               // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Voucher Details',
-                        style: Theme.of(context).textTheme.headlineSmall,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Voucher Details',
+                            style: Theme.of(context).textTheme.headlineSmall,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '€${widget.voucher.depositValue.toStringAsFixed(2)} deposit',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Theme.of(context).primaryColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        '€${widget.voucher.depositValue.toStringAsFixed(2)} deposit',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Theme.of(context).primaryColor,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  PopupMenuButton<String>(
-                    onSelected: (value) => _handleMenuAction(context, value),
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: 'copy',
-                        child: Row(
-                          children: [
-                            Icon(Icons.copy),
-                            SizedBox(width: 8),
-                            Text('Copy Barcode'),
-                          ],
-                        ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'download',
-                        child: Row(
-                          children: [
-                            Icon(Icons.download),
-                            SizedBox(width: 8),
-                            Text('Download'),
-                          ],
-                        ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'share',
-                        child: Row(
-                          children: [
-                            Icon(Icons.share),
-                            SizedBox(width: 8),
-                            Text('Share'),
-                          ],
-                        ),
-                      ),
-                      if (!widget.voucher.isUsed)
+                    ),
+                    PopupMenuButton<String>(
+                      onSelected: (value) => _handleMenuAction(context, value),
+                      itemBuilder: (context) => [
                         const PopupMenuItem(
-                          value: 'mark_used',
+                          value: 'copy',
                           child: Row(
                             children: [
-                              Icon(Icons.check_circle),
+                              Icon(Icons.copy),
                               SizedBox(width: 8),
-                              Text('Mark as Used'),
+                              Text('Copy Barcode'),
                             ],
                           ),
                         ),
-                      const PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete, color: Colors.red),
-                            SizedBox(width: 8),
-                            Text('Delete', style: TextStyle(color: Colors.red)),
-                          ],
+                        const PopupMenuItem(
+                          value: 'download',
+                          child: Row(
+                            children: [
+                              Icon(Icons.download),
+                              SizedBox(width: 8),
+                              Text('Download'),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                        const PopupMenuItem(
+                          value: 'share',
+                          child: Row(
+                            children: [
+                              Icon(Icons.share),
+                              SizedBox(width: 8),
+                              Text('Share'),
+                            ],
+                          ),
+                        ),
+                        if (!widget.voucher.isUsed)
+                          const PopupMenuItem(
+                            value: 'mark_used',
+                            child: Row(
+                              children: [
+                                Icon(Icons.check_circle),
+                                SizedBox(width: 8),
+                                Text('Mark as Used'),
+                              ],
+                            ),
+                          ),
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete, color: Colors.red),
+                              SizedBox(width: 8),
+                              Text('Delete', style: TextStyle(color: Colors.red)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
 
               const SizedBox(height: 24),
 
               // Barcode Display
-              RepaintBoundary(
-                key: _barcodeKey,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: Colors.grey[300]!),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    children: [
-                      // Barcode Widget
-                      SizedBox(
-                        height: 80,
-                        child: BarcodeWidget(
-                          barcode: Barcode.code128(),
-                          data: widget.voucher.barcode,
-                          drawText: false,
-                          color: Colors.black,
-                          backgroundColor: Colors.transparent,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: RepaintBoundary(
+                  key: _barcodeKey,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        // Barcode Widget
+                        SizedBox(
+                          height: 80,
+                          child: BarcodeWidget(
+                            barcode: Barcode.code128(),
+                            data: widget.voucher.barcode,
+                            drawText: false,
+                            color: Colors.black,
+                            backgroundColor: Colors.transparent,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      SelectableText(
-                        widget.voucher.barcode,
-                        style: const TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                        const SizedBox(height: 12),
+                        SelectableText(
+                          widget.voucher.barcode,
+                          style: const TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -543,41 +551,52 @@ class _VoucherDetailsSheetState extends State<VoucherDetailsSheet> {
               const SizedBox(height: 24),
 
               // Details
-              _buildDetailRow('Barcode', widget.voucher.barcode),
-              _buildDetailRow('Store', widget.voucher.storeName ?? 'Unknown'),
-              if (widget.voucher.storeLocation != null)
-                _buildDetailRow('Location', widget.voucher.storeLocation!),
-              _buildDetailRow('Created', dateFormat.format(widget.voucher.dateCreated)),
-              if (widget.voucher.isUsed && widget.voucher.usedDate != null)
-                _buildDetailRow('Used', dateFormat.format(widget.voucher.usedDate!)),
-              if (widget.voucher.receiptDateTime != null)
-                _buildDetailRow(
-                  'Receipt Date',
-                  DateFormat('MMMM dd, yyyy • HH:mm').format(widget.voucher.receiptDateTime!),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Column(
+                  children: [
+                    _buildDetailRow('Barcode', widget.voucher.barcode),
+                    _buildDetailRow('Store', widget.voucher.storeName ?? 'Unknown'),
+                    if (widget.voucher.storeLocation != null)
+                      _buildDetailRow('Location', widget.voucher.storeLocation!),
+                    _buildDetailRow('Created', dateFormat.format(widget.voucher.dateCreated)),
+                    if (widget.voucher.isUsed && widget.voucher.usedDate != null)
+                      _buildDetailRow('Used', dateFormat.format(widget.voucher.usedDate!)),
+                    if (widget.voucher.receiptDateTime != null)
+                      _buildDetailRow(
+                        'Receipt Date',
+                        DateFormat('MMMM dd, yyyy • HH:mm').format(widget.voucher.receiptDateTime!),
+                      ),
+                    _buildDetailRow(
+                      'Status',
+                      widget.voucher.isUsed ? 'Used' : 'Active',
+                      valueColor: widget.voucher.isUsed ? Colors.grey[600] : Colors.green[700],
+                    ),
+                  ],
                 ),
-              _buildDetailRow(
-                'Status',
-                widget.voucher.isUsed ? 'Used' : 'Active',
-                valueColor: widget.voucher.isUsed ? Colors.grey[600] : Colors.green[700],
               ),
 
-              const Spacer(),
+              const SizedBox(height: 32), // Spacer for button
 
               // Action Button
               if (!widget.voucher.isUsed)
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => _markAsUsed(context),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => _markAsUsed(context),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
+                      child: const Text('Mark as Used'),
                     ),
-                    child: const Text('Mark as Used'),
                   ),
                 ),
+              const SizedBox(height: 24),
             ],
           ),
         );
