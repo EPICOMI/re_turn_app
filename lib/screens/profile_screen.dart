@@ -403,6 +403,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   void _showSettingsBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
