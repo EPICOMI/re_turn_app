@@ -309,7 +309,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   Text(
                     'Sort by',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -369,7 +369,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     Text(
                       'Filter',
                       style: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w500),
+                          fontSize: 14, fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(width: 4),
                     Icon(Icons.filter_list, color: Theme
