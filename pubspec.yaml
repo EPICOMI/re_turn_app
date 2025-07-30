@@ -81,6 +81,7 @@ dependencies:
 
   # Conditional Permission Handler
   device_info_plus: ^11.5.0
+  screen_brightness: ^2.1.5
 
 dev_dependencies:
   flutter_test:

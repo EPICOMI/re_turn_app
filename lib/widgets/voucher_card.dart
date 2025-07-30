@@ -14,6 +14,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:re_turn_app/screens/barcode_screen.dart';
 
 class VoucherCard extends StatelessWidget {
   final Voucher voucher;
@@ -512,39 +513,49 @@ class _VoucherDetailsSheetState extends State<VoucherDetailsSheet> {
                   SizedBox(height: spacing),
 
                   // Barcode Display
-                  RepaintBoundary(
-                    key: _barcodeKey,
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: Colors.grey[300]!),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        children: [
-                          // Barcode Widget
-                          SizedBox(
-                            height: barcodeHeight,
-                            child: BarcodeWidget(
-                              barcode: Barcode.code128(),
-                              data: widget.voucher.barcode,
-                              drawText: false,
-                              color: Colors.black,
-                              backgroundColor: Colors.transparent,
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BarcodeScreen(barcode: widget.voucher.barcode),
+                        ),
+                      );
+                    },
+                    child: RepaintBoundary(
+                      key: _barcodeKey,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: Colors.grey[300]!),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          children: [
+                            // Barcode Widget
+                            SizedBox(
+                              height: barcodeHeight,
+                              child: BarcodeWidget(
+                                barcode: Barcode.code128(),
+                                data: widget.voucher.barcode,
+                                drawText: false,
+                                color: Colors.black,
+                                backgroundColor: Colors.transparent,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          SelectableText(
-                            widget.voucher.barcode,
-                            style: const TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
+                            const SizedBox(height: 12),
+                            SelectableText(
+                              widget.voucher.barcode,
+                              style: const TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
