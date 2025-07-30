@@ -662,10 +662,10 @@ class _SliverCombinedBarDelegate extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  double get maxExtent => 104.0;
+  double get maxExtent => 96.0;
 
   @override
-  double get minExtent => 104.0;
+  double get minExtent => 96.0;
 
   @override
   bool shouldRebuild(SliverPersistentHeaderDelegate oldDelegate) {
