@@ -85,135 +85,121 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         builder: (context, voucherProvider, child) {
           final stats = voucherProvider.getStatistics();
 
-          return Column(
-            children: [
-              // Profile Header
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(24.0),
-                decoration: BoxDecoration(
-                  color: Theme
-                      .of(context)
-                      .colorScheme
-                      .inversePrimary,
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(24),
-                    bottomRight: Radius.circular(24),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    // Avatar
-                    CircleAvatar(
-                      radius: 40,
-                      backgroundColor: Theme
-                          .of(context)
-                          .primaryColor,
-                      child: const Icon(
-                        Icons.person,
-                        size: 40,
-                        color: Colors.white,
+          return NestedScrollView(
+            headerSliverBuilder: (context, innerBoxIsScrolled) {
+              return [
+                SliverToBoxAdapter(
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24.0),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.inversePrimary,
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(24),
+                        bottomRight: Radius.circular(24),
                       ),
                     ),
-                    const SizedBox(height: 16),
-
-                    // User Info
-                    Text(
-                      'Re-Turn User',
-                      style: Theme
-                          .of(context)
-                          .textTheme
-                          .headlineSmall
-                          ?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Eco-friendly recycler since ${DateTime
-                          .now()
-                          .year}',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Quick Stats Row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    child: Column(
                       children: [
-                        _buildStatColumn(
-                          '${stats['total']}',
-                          'Total Vouchers',
-                          Icons.receipt_long,
+                        // Avatar
+                        CircleAvatar(
+                          radius: 40,
+                          backgroundColor: Theme.of(context).primaryColor,
+                          child: const Icon(
+                            Icons.person,
+                            size: 40,
+                            color: Colors.white,
+                          ),
                         ),
-                        Container(
-                          height: 40,
-                          width: 1,
-                          color: Colors.grey[300],
+                        const SizedBox(height: 16),
+
+                        // User Info
+                        Text(
+                          'Re-Turn User',
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
-                        _buildStatColumn(
-                          '€${voucherProvider.totalValue.toStringAsFixed(2)}',
-                          'Available Credit',
-                          Icons.euro,
+                        const SizedBox(height: 8),
+                        Text(
+                          'Eco-friendly recycler since ${DateTime.now().year}',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 14,
+                          ),
                         ),
-                        Container(
-                          height: 40,
-                          width: 1,
-                          color: Colors.grey[300],
-                        ),
-                        _buildStatColumn(
-                          '${stats['used']}',
-                          'Used Vouchers',
-                          Icons.check_circle,
+                        const SizedBox(height: 24),
+
+                        // Quick Stats Row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildStatColumn(
+                              '${stats['total']}',
+                              'Total Vouchers',
+                              Icons.receipt_long,
+                            ),
+                            Container(
+                              height: 40,
+                              width: 1,
+                              color: Colors.grey[300],
+                            ),
+                            _buildStatColumn(
+                              '€${voucherProvider.totalValue.toStringAsFixed(2)}',
+                              'Available Credit',
+                              Icons.euro,
+                            ),
+                            Container(
+                              height: 40,
+                              width: 1,
+                              color: Colors.grey[300],
+                            ),
+                            _buildStatColumn(
+                              '${stats['used']}',
+                              'Used Vouchers',
+                              Icons.check_circle,
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-
-              // Tab Bar
-              Container(
-                color: Colors.grey[50],
-                child: TabBar(
-                  controller: _tabController,
-                  labelColor: Theme
-                      .of(context)
-                      .primaryColor,
-                  unselectedLabelColor: Colors.grey[600],
-                  indicatorColor: Theme
-                      .of(context)
-                      .primaryColor,
-                  tabs: const [
-                    Tab(text: 'All', icon: Icon(Icons.list)),
-                    Tab(text: 'Active',
-                        icon: Icon(Icons.radio_button_unchecked)),
-                    Tab(text: 'Used', icon: Icon(Icons.check_circle)),
-                  ],
+                SliverPersistentHeader(
+                  delegate: _SliverAppBarDelegate(
+                    TabBar(
+                      controller: _tabController,
+                      labelColor: Theme.of(context).primaryColor,
+                      unselectedLabelColor: Colors.grey[600],
+                      indicatorColor: Theme.of(context).primaryColor,
+                      tabs: const [
+                        Tab(text: 'All', icon: Icon(Icons.list)),
+                        Tab(
+                            text: 'Active',
+                            icon: Icon(Icons.radio_button_unchecked)),
+                        Tab(text: 'Used', icon: Icon(Icons.check_circle)),
+                      ],
+                    ),
+                  ),
+                  pinned: true,
                 ),
-              ),
-
-              // Tab Content
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    // All Vouchers
-                    _buildVoucherList(
-                        voucherProvider.vouchers, voucherProvider),
-                    // Active Vouchers
-                    _buildVoucherList(
-                        voucherProvider.activeVouchers, voucherProvider),
-                    // Used Vouchers
-                    _buildVoucherList(
-                        voucherProvider.usedVouchers, voucherProvider),
-                  ],
-                ),
-              ),
-            ],
+              ];
+            },
+            body: TabBarView(
+              controller: _tabController,
+              children: [
+                // All Vouchers
+                _buildVoucherList(voucherProvider.vouchers, voucherProvider),
+                // Active Vouchers
+                _buildVoucherList(
+                    voucherProvider.activeVouchers, voucherProvider),
+                // Used Vouchers
+                _buildVoucherList(voucherProvider.usedVouchers, voucherProvider),
+              ],
+            ),
           );
         },
       ),
@@ -664,4 +650,30 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     }
   }
 
+}
+
+class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
+  _SliverAppBarDelegate(this._tabBar);
+
+  final TabBar _tabBar;
+
+  @override
+  double get minExtent => _tabBar.preferredSize.height;
+
+  @override
+  double get maxExtent => _tabBar.preferredSize.height;
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: Colors.grey[50],
+      child: _tabBar,
+    );
+  }
+
+  @override
+  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
+    return false;
+  }
 }
