@@ -59,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Re-Turn Digital'),
+        title: const Text('Vouchers'),
         elevation: 0,
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),

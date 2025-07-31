@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
+import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:re_turn_app/providers/voucher_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -68,28 +70,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _cropImage(String filePath) async {
-    final croppedFile = await ImageCropper().cropImage(
-      sourcePath: filePath,
-      aspectRatioPresets: [
-        CropAspectRatioPreset.square,
-      ],
-      uiSettings: [
-        AndroidUiSettings(
-            toolbarTitle: 'Crop Image',
-            toolbarColor: Theme.of(context).primaryColor,
-            toolbarWidgetColor: Colors.white,
-            initAspectRatio: CropAspectRatioPreset.original,
-            lockAspectRatio: false),
-        IOSUiSettings(
-          title: 'Crop Image',
-        ),
-      ],
-      cropStyle: CropStyle.circle,
-    );
-    if (croppedFile != null) {
+    try {
+      // Read the image file
+      final originalFile = File(filePath);
+      final originalImage = img.decodeImage(await originalFile.readAsBytes());
+
+      if (originalImage == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to load image')),
+        );
+        return;
+      }
+
+      // Calculate square crop dimensions
+      final size = originalImage.width < originalImage.height
+          ? originalImage.width
+          : originalImage.height;
+      final x = (originalImage.width - size) ~/ 2;
+      final y = (originalImage.height - size) ~/ 2;
+
+      // Crop to square
+      final croppedImage = img.copyCrop(
+        originalImage,
+        x: x,
+        y: y,
+        width: size,
+        height: size,
+      );
+
+      // Save cropped image to temporary directory
+      final tempDir = await getTemporaryDirectory();
+      final croppedFile = File('${tempDir.path}/cropped_${DateTime.now().millisecondsSinceEpoch}.png');
+      await croppedFile.writeAsBytes(img.encodePng(croppedImage));
+
       setState(() {
-        _image = File(croppedFile.path);
+        _image = croppedFile;
       });
+    } catch (e) {
+      debugPrint('Error cropping image: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to crop image: $e')),
+      );
     }
   }
 

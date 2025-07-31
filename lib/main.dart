@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => VoucherProvider(),
       child: MaterialApp(
-        title: 'Re-Turn Digital',
+        title: 'Vouchers',
         theme: ThemeData(
           primarySwatch: Colors.green,
           useMaterial3: true,
@@ -76,8 +76,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
+            icon: Icon(Icons.receipt),
+            label: 'Vouchers',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.qr_code_scanner),
