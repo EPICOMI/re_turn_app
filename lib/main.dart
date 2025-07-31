@@ -83,10 +83,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             icon: Icon(Icons.qr_code_scanner),
             label: 'Scan',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
+//profile          BottomNavigationBarItem(
+//screen            icon: Icon(Icons.person),
+//enable            label: 'Profile',
+//disable          ),
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
