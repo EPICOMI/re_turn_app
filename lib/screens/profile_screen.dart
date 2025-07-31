@@ -5,6 +5,7 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:re_turn_app/providers/voucher_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -25,8 +26,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: _initialName);
-    _bioController = TextEditingController(text: _initialBio);
+    _nameController = TextEditingController();
+    _bioController = TextEditingController();
+    _loadProfileData();
+  }
+
+  Future<void> _loadProfileData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _nameController.text = prefs.getString('name') ?? 'Re-Turn User';
+      _bioController.text = prefs.getString('bio') ?? 'Eco-friendly recycler since ${DateTime.now().year}';
+      final imagePath = prefs.getString('imagePath');
+      if (imagePath != null) {
+        _image = File(imagePath);
+      }
+    });
+  }
+
+  Future<void> _saveProfileData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('name', _nameController.text);
+    await prefs.setString('bio', _bioController.text);
+    if (_image != null) {
+      await prefs.setString('imagePath', _image!.path);
+    }
   }
 
   @override
@@ -75,12 +98,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _isEditing = !_isEditing;
       if (!_isEditing) {
         // Save changes
-        _initialName = _nameController.text;
-        _initialBio = _bioController.text;
+        _saveProfileData();
       } else {
         // Reset to initial values when entering edit mode
-        _nameController.text = _initialName;
-        _bioController.text = _initialBio;
+        _loadProfileData();
       }
     });
   }
