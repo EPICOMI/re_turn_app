@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:re_turn_app/providers/voucher_provider.dart';
 
@@ -10,19 +14,110 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  bool _isEditing = false;
+  late TextEditingController _nameController;
+  late TextEditingController _bioController;
+  File? _image;
+
+  String _initialName = 'Re-Turn User';
+  String _initialBio = 'Eco-friendly recycler since ${DateTime.now().year}';
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: _initialName);
+    _bioController = TextEditingController(text: _initialBio);
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _bioController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      _cropImage(pickedFile.path);
+    }
+  }
+
+  Future<void> _cropImage(String filePath) async {
+    final croppedFile = await ImageCropper().cropImage(
+      sourcePath: filePath,
+      aspectRatioPresets: [
+        CropAspectRatioPreset.square,
+      ],
+      uiSettings: [
+        AndroidUiSettings(
+            toolbarTitle: 'Crop Image',
+            toolbarColor: Theme.of(context).primaryColor,
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.original,
+            lockAspectRatio: false),
+        IOSUiSettings(
+          title: 'Crop Image',
+        ),
+      ],
+      cropStyle: CropStyle.circle,
+    );
+    if (croppedFile != null) {
+      setState(() {
+        _image = File(croppedFile.path);
+      });
+    }
+  }
+
+  void _toggleEdit() {
+    setState(() {
+      _isEditing = !_isEditing;
+      if (!_isEditing) {
+        // Save changes
+        _initialName = _nameController.text;
+        _initialBio = _bioController.text;
+      } else {
+        // Reset to initial values when entering edit mode
+        _nameController.text = _initialName;
+        _bioController.text = _initialBio;
+      }
+    });
+  }
+
+  void _cancelEdit() {
+    setState(() {
+      _isEditing = false;
+      _nameController.text = _initialName;
+      _bioController.text = _initialBio;
+      _image = null; // Or reset to a previously saved image if applicable
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: Text(_isEditing ? 'Edit Profile' : 'Profile'),
         elevation: 0,
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        actions: [
-          IconButton(
-            onPressed: () => _showSettingsBottomSheet(context),
-            icon: const Icon(Icons.settings),
-          ),
-        ],
+        actions: _isEditing
+            ? [
+                IconButton(
+                  onPressed: _cancelEdit,
+                  icon: const Icon(Icons.close),
+                ),
+                IconButton(
+                  onPressed: _toggleEdit,
+                  icon: const Icon(Icons.check),
+                ),
+              ]
+            : [
+                IconButton(
+                  onPressed: () => _showSettingsBottomSheet(context),
+                  icon: const Icon(Icons.settings),
+                ),
+              ],
       ),
       body: Consumer<VoucherProvider>(
         builder: (context, voucherProvider, child) {
@@ -44,35 +139,78 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Column(
                     children: [
                       // Avatar
-                      CircleAvatar(
-                        radius: 40,
-                        backgroundColor: Theme.of(context).primaryColor,
-                        child: const Icon(
-                          Icons.person,
-                          size: 40,
-                          color: Colors.white,
+                      GestureDetector(
+                        onTap: _isEditing ? _pickImage : null,
+                        child: CircleAvatar(
+                          radius: 40,
+                          backgroundColor: Theme.of(context).primaryColor,
+                          backgroundImage:
+                              _image != null ? FileImage(_image!) : null,
+                          child: _image == null
+                              ? const Icon(
+                                  Icons.person,
+                                  size: 40,
+                                  color: Colors.white,
+                                )
+                              : null,
                         ),
                       ),
                       const SizedBox(height: 16),
 
                       // User Info
-                      Text(
-                        'Re-Turn User',
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineSmall
-                            ?.copyWith(
-                              fontWeight: FontWeight.bold,
+                      _isEditing
+                          ? Column(
+                              children: [
+                                TextField(
+                                  controller: _nameController,
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineSmall
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                  decoration: const InputDecoration(
+                                    isDense: true,
+                                    hintText: 'Enter your name',
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                TextField(
+                                  controller: _bioController,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 14,
+                                  ),
+                                  decoration: const InputDecoration(
+                                    isDense: true,
+                                    hintText: 'Enter your bio',
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Column(
+                              children: [
+                                Text(
+                                  _nameController.text,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineSmall
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  _bioController.text,
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
                             ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Eco-friendly recycler since ${DateTime.now().year}',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -125,6 +263,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   SizedBox(height: spacing),
 
                   // Settings Options
+                  _buildSettingsTile(
+                    Icons.edit,
+                    'Edit Profile',
+                    'Change your avatar, name, and bio',
+                    () {
+                      Navigator.pop(context);
+                      _toggleEdit();
+                    },
+                  ),
                   _buildSettingsTile(
                     Icons.notifications,
                     'Notifications',
