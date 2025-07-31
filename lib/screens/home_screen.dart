@@ -68,6 +68,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           if (voucherProvider.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
+          final stats = voucherProvider.getStatistics();
 
           return RefreshIndicator(
             onRefresh: () async {
@@ -88,34 +89,33 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           bottomRight: Radius.circular(24),
                         ),
                       ),
-                      child: Column(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          CircleAvatar(
-                            radius: 40,
-                            backgroundColor: Theme.of(context).primaryColor,
-                            child: const Icon(
-                              Icons.person,
-                              size: 40,
-                              color: Colors.white,
-                            ),
+                          _buildStatColumn(
+                            '${stats['total']}',
+                            'Total Vouchers',
+                            Icons.receipt_long,
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Re-Turn User',
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineSmall
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                          Container(
+                            height: 40,
+                            width: 1,
+                            color: Colors.grey[300],
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Welcome back!',
-                            style: TextStyle(
-                              color: Colors.grey[800],
-                              fontSize: 14,
-                            ),
+                          _buildStatColumn(
+                            '€${voucherProvider.totalValue.toStringAsFixed(2)}',
+                            'Available Credit',
+                            Icons.euro,
+                          ),
+                          Container(
+                            height: 40,
+                            width: 1,
+                            color: Colors.grey[300],
+                          ),
+                          _buildStatColumn(
+                            '${stats['used']}',
+                            'Used Vouchers',
+                            Icons.check_circle,
                           ),
                         ],
                       ),
@@ -151,6 +151,30 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           );
         },
       ),
+    );
+  }
+
+  Widget _buildStatColumn(String value, String label, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, color: Theme.of(context).primaryColor, size: 20),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 

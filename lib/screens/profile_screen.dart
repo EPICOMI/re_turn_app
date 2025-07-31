@@ -26,7 +26,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       body: Consumer<VoucherProvider>(
         builder: (context, voucherProvider, child) {
-          final stats = voucherProvider.getStatistics();
+          voucherProvider.getStatistics();
 
           return SingleChildScrollView(
             child: Column(
@@ -73,39 +73,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           fontSize: 14,
                         ),
                       ),
-                      const SizedBox(height: 24),
-
-                      // Quick Stats Row
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _buildStatColumn(
-                            '${stats['total']}',
-                            'Total Vouchers',
-                            Icons.receipt_long,
-                          ),
-                          Container(
-                            height: 40,
-                            width: 1,
-                            color: Colors.grey[300],
-                          ),
-                          _buildStatColumn(
-                            '€${voucherProvider.totalValue.toStringAsFixed(2)}',
-                            'Available Credit',
-                            Icons.euro,
-                          ),
-                          Container(
-                            height: 40,
-                            width: 1,
-                            color: Colors.grey[300],
-                          ),
-                          _buildStatColumn(
-                            '${stats['used']}',
-                            'Used Vouchers',
-                            Icons.check_circle,
-                          ),
-                        ],
-                      ),
                     ],
                   ),
                 ),
@@ -114,30 +81,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           );
         },
       ),
-    );
-  }
-
-  Widget _buildStatColumn(String value, String label, IconData icon) {
-    return Column(
-      children: [
-        Icon(icon, color: Theme.of(context).primaryColor, size: 20),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
     );
   }
 
