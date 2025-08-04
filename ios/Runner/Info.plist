@@ -16,8 +16,10 @@
 	<string>re_turn_app</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
- <key>NSCameraUsageDescription</key>
- <string>This app needs camera access to scan receipts for vouchers.</string>
+        <key>NSCameraUsageDescription</key>
+        <string>This app needs camera access to scan receipts for vouchers.</string>
+        <key>NSPhotoLibraryAddUsageDescription</key>
+        <string>This app needs permission to save your voucher barcode to your photo library.</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(FLUTTER_BUILD_NAME)</string>
         <key>NSLocationWhenInUseUsageDescription</key>
