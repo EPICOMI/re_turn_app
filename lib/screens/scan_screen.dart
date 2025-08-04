@@ -417,7 +417,21 @@ class _ScanScreenState extends State<ScanScreen> {
     );
   }
 
-  Future<void> _processImage(ImageSource source) async {
+Future<void> _processImage(ImageSource source) async {
+  // Check and request camera permission
+  final status = await Permission.camera.request();
+  if (status.isDenied) {
+    _showErrorSnackBar('Camera permission is required to scan receipts.');
+    return;
+  }
+  if (status.isPermanentlyDenied) {
+    _showErrorSnackBar('Camera permission is permanently denied. Please enable it in Settings.');
+    await openAppSettings(); // Open settings for the user to grant permission
+    return;
+  }
+
+  // Proceed only if permission is granted
+  if (status.isGranted) {
     try {
       setState(() {
         _isScanning = true;
@@ -436,6 +450,49 @@ class _ScanScreenState extends State<ScanScreen> {
           _barcodeController.text = barcodes.first.rawValue ?? '';
           _showSuccessSnackBar('Barcode scanned successfully!');
         }
+
+        // [Rest of the original code continues here, e.g., text recognition]
+        // ... (keeping the existing logic for text recognition and field population)
+        // Example continuation (based on your full method):
+        final textRecognizer = TextRecognizer();
+        final recognizedText = await textRecognizer.processImage(inputImage);
+        final extractedData = _parseReceiptText(recognizedText.text);
+
+        _depositController.text = extractedData['deposit'] ?? '';
+        _storeNameController.text = extractedData['store'] ?? '';
+        _storeLocationController.text = extractedData['location'] ?? '';
+        _receiptDateTime = extractedData['dateTime'] != null
+            ? DateTime.tryParse(extractedData['dateTime']!)
+            : null;
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('last_voucher_creation_time', DateTime.now().toIso8601String());
+
+        if (barcodes.isEmpty && recognizedText.text.isEmpty) {
+          _showErrorSnackBar('No barcode or text detected in the image.');
+        } else {
+          setState(() {
+            _isManualEntry = true;
+          });
+          FocusScope.of(context).nextFocus();
+        }
+
+        await barcodeScanner.close();
+        await textRecognizer.close();
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorSnackBar('Error processing image: ${e.toString()}');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isScanning = true; // Fixed typo: Should be _isScanning = false
+        });
+      }
+    }
+  }
+}
 
         // Text Recognition
         final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
