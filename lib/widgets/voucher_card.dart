@@ -307,38 +307,50 @@ class _VoucherDetailsSheetState extends State<VoucherDetailsSheet> {
     }
   }
 
-  void _downloadBarcode() async {
-    if (!await _requestStoragePermission()) {
-      return;
-    }
+void _downloadBarcode() async {
+  // Permission handling for both Android and iOS
+  PermissionStatus status;
+  if (Platform.isAndroid) {
+    status = await Permission.storage.request();
+  } else if (Platform.isIOS) {
+    status = await Permission.photos.request();
+  } else {
+    // Other platforms (e.g., macOS, Windows) - handle as needed or skip
+    status = PermissionStatus.granted;
+  }
 
+  if (status.isDenied) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Storage permission is required to save the barcode.')),
+    );
+    return;
+  }
+  if (status.isPermanentlyDenied) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Storage permission is permanently denied. Please enable it in Settings.')),
+    );
+    await openAppSettings();
+    return;
+  }
+
+  // Proceed only if permission is granted
+  if (status.isGranted) {
     final imageData = await _captureBarcode();
-    if (imageData == null) {
-      if (mounted) {
+    if (imageData != null) {
+      try {
+        await Gal.putImageBytes(imageData);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to capture barcode')),
+          const SnackBar(content: Text('Saved Successfully')),
         );
-      }
-      return;
-    }
-
-    try {
-      await Gal.putImageBytes(imageData);
-      if (mounted) {
+      } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Barcode saved to gallery')),
-        );
-      }
-    } catch (e) {
-      print('Error saving barcode to gallery: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save barcode: ${e.toString().split('\n').first}')),
+          SnackBar(content: Text('Failed to save barcode: $e')),
         );
       }
     }
   }
-
+}
+  
   void _shareBarcode() async {
     final imageData = await _captureBarcode();
     if (imageData == null) {
