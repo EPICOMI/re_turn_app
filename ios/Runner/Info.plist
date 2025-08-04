@@ -16,6 +16,8 @@
 	<string>re_turn_app</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
+ <key>NSCameraUsageDescription</key>
+ <string>This app needs camera access to scan receipts for vouchers.</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(FLUTTER_BUILD_NAME)</string>
         <key>NSLocationWhenInUseUsageDescription</key>
