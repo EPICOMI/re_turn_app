@@ -9,6 +9,7 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'package:re_turn_app/models/voucher.dart';
 import 'package:re_turn_app/providers/voucher_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key});
@@ -417,121 +418,81 @@ class _ScanScreenState extends State<ScanScreen> {
     );
   }
 
-Future<void> _processImage(ImageSource source) async {
-  // Check and request camera permission
-  final status = await Permission.camera.request();
-  if (status.isDenied) {
-    _showErrorSnackBar('Camera permission is required to scan receipts.');
-    return;
-  }
-  if (status.isPermanentlyDenied) {
-    _showErrorSnackBar('Camera permission is permanently denied. Please enable it in Settings.');
-    await openAppSettings(); // Open settings for the user to grant permission
-    return;
-  }
+  Future<void> _processImage(ImageSource source) async {
+    // Check and request camera permission
+    final status = await Permission.camera.request();
+    if (status.isDenied) {
+      _showErrorSnackBar('Camera permission is required to scan receipts.');
+      return;
+    }
+    if (status.isPermanentlyDenied) {
+      _showErrorSnackBar('Camera permission is permanently denied. Please enable it in Settings.');
+      await openAppSettings(); // Open settings for the user to grant permission
+      return;
+    }
 
-  // Proceed only if permission is granted
-  if (status.isGranted) {
-    try {
+    // Proceed only if permission is granted
+    if (status.isGranted) {
       setState(() {
         _isScanning = true;
       });
 
-      final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(source: source);
+      try {
+        final ImagePicker picker = ImagePicker();
+        final XFile? image = await picker.pickImage(source: source);
 
-      if (image != null && mounted) {
-        final inputImage = InputImage.fromFilePath(image.path);
+        if (image != null && mounted) {
+          final inputImage = InputImage.fromFilePath(image.path);
 
-        // Barcode Scanning
-        final barcodeScanner = BarcodeScanner(formats: [BarcodeFormat.all]);
-        final barcodes = await barcodeScanner.processImage(inputImage);
-        if (barcodes.isNotEmpty && mounted) {
-          _barcodeController.text = barcodes.first.rawValue ?? '';
-          _showSuccessSnackBar('Barcode scanned successfully!');
+          // Barcode Scanning
+          final barcodeScanner = BarcodeScanner(formats: [BarcodeFormat.all]);
+          final barcodes = await barcodeScanner.processImage(inputImage);
+          if (barcodes.isNotEmpty && mounted) {
+            _barcodeController.text = barcodes.first.rawValue ?? '';
+            _showSuccessSnackBar('Barcode scanned successfully!');
+          }
+
+          // Text Recognition
+          final textRecognizer =
+              TextRecognizer(script: TextRecognitionScript.latin);
+          final recognizedText = await textRecognizer.processImage(inputImage);
+          final extractedData = _parseReceiptText(recognizedText.text);
+
+          // Populate fields
+          _depositController.text = extractedData['deposit'] ?? '';
+          _storeNameController.text = extractedData['store'] ?? '';
+          _storeLocationController.text = extractedData['location'] ?? '';
+          _receiptDateTime = extractedData['dateTime'] != null
+              ? DateTime.tryParse(extractedData['dateTime']!)
+              : null;
+
+          // Save creation time to shared_preferences
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(
+              'last_voucher_creation_time', DateTime.now().toIso8601String());
+
+          if (barcodes.isEmpty && recognizedText.text.isEmpty) {
+            _showErrorSnackBar('No barcode or text detected in the image.');
+          } else {
+            setState(() {
+              _isManualEntry = true;
+            });
+            FocusScope.of(context).nextFocus();
+          }
+
+          await barcodeScanner.close();
+          await textRecognizer.close();
         }
-
-        // [Rest of the original code continues here, e.g., text recognition]
-        // ... (keeping the existing logic for text recognition and field population)
-        // Example continuation (based on your full method):
-        final textRecognizer = TextRecognizer();
-        final recognizedText = await textRecognizer.processImage(inputImage);
-        final extractedData = _parseReceiptText(recognizedText.text);
-
-        _depositController.text = extractedData['deposit'] ?? '';
-        _storeNameController.text = extractedData['store'] ?? '';
-        _storeLocationController.text = extractedData['location'] ?? '';
-        _receiptDateTime = extractedData['dateTime'] != null
-            ? DateTime.tryParse(extractedData['dateTime']!)
-            : null;
-
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('last_voucher_creation_time', DateTime.now().toIso8601String());
-
-        if (barcodes.isEmpty && recognizedText.text.isEmpty) {
-          _showErrorSnackBar('No barcode or text detected in the image.');
-        } else {
+      } catch (e) {
+        if (mounted) {
+          _showErrorSnackBar('Error processing image: ${e.toString()}');
+        }
+      } finally {
+        if (mounted) {
           setState(() {
-            _isManualEntry = true;
+            _isScanning = false;
           });
-          FocusScope.of(context).nextFocus();
         }
-
-        await barcodeScanner.close();
-        await textRecognizer.close();
-      }
-    } catch (e) {
-      if (mounted) {
-        _showErrorSnackBar('Error processing image: ${e.toString()}');
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isScanning = true; // Fixed typo: Should be _isScanning = false
-        });
-      }
-    }
-  }
-}
-
-        // Text Recognition
-        final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
-        final recognizedText = await textRecognizer.processImage(inputImage);
-        final extractedData = _parseReceiptText(recognizedText.text);
-
-        // Populate fields
-        _depositController.text = extractedData['deposit'] ?? '';
-        _storeNameController.text = extractedData['store'] ?? '';
-        _storeLocationController.text = extractedData['location'] ?? '';
-        _receiptDateTime = extractedData['dateTime'] != null
-            ? DateTime.tryParse(extractedData['dateTime']!)
-            : null;
-
-        // Save creation time to shared_preferences
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('last_voucher_creation_time', DateTime.now().toIso8601String());
-
-        if (barcodes.isEmpty && recognizedText.text.isEmpty) {
-          _showErrorSnackBar('No barcode or text detected in the image.');
-        } else {
-          setState(() {
-            _isManualEntry = true;
-          });
-          FocusScope.of(context).nextFocus();
-        }
-
-        await barcodeScanner.close();
-        await textRecognizer.close();
-      }
-    } catch (e) {
-      if (mounted) {
-        _showErrorSnackBar('Error processing image: ${e.toString()}');
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isScanning = false;
-        });
       }
     }
   }
