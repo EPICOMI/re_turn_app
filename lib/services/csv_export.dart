@@ -35,6 +35,7 @@ String csvEscape(Object? value) {
 }
 
 /// Converts vouchers to CSV text (header + one row per voucher).
+/// The barcode is written as plain text exactly as stored.
 String vouchersToCsv(List<Voucher> vouchers) {
   final buffer = StringBuffer()..writeln(kVoucherCsvHeader.join(','));
   for (final v in vouchers) {
@@ -57,12 +58,13 @@ String vouchersToCsv(List<Voucher> vouchers) {
 }
 
 /// Writes the CSV to a temporary file and opens the system share sheet
-/// (user can pick Google Drive, email, etc.).
+/// (user can pick Google Drive, email, etc.). A UTF-8 byte-order mark is
+/// added so Excel reads characters such as the euro sign correctly.
 Future<void> exportVouchersCsv(List<Voucher> vouchers) async {
   final dir = await getTemporaryDirectory();
   final stamp = DateTime.now().millisecondsSinceEpoch;
   final file = File('${dir.path}/re_turn_vouchers_$stamp.csv');
-  await file.writeAsString(vouchersToCsv(vouchers));
+  await file.writeAsString('\uFEFF${vouchersToCsv(vouchers)}');
 
   await SharePlus.instance.share(
     ShareParams(

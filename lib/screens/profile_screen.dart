@@ -6,7 +6,9 @@ import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:re_turn_app/constants.dart';
 import 'package:re_turn_app/providers/voucher_provider.dart';
+import 'package:re_turn_app/services/csv_export.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -134,6 +136,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _bioController.text = _initialBio;
       _image = null; // Or reset to a previously saved image if applicable
     });
+  }
+
+  /// Exports every voucher to a CSV file via the system share sheet.
+  /// Uses this State's context (not the closed bottom sheet's context).
+  Future<void> _exportCsv() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final vouchers =
+        Provider.of<VoucherProvider>(context, listen: false).vouchers;
+
+    if (vouchers.isEmpty) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('No vouchers to export yet.')),
+      );
+      return;
+    }
+
+    try {
+      await exportVouchersCsv(vouchers);
+    } catch (e) {
+      debugPrint('Error exporting CSV: $e');
+      messenger.showSnackBar(
+        SnackBar(content: Text('Export failed: $e')),
+      );
+    }
   }
 
   @override
@@ -333,6 +359,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                   ),
                   _buildSettingsTile(
+                    Icons.file_download,
+                    'Export vouchers (CSV)',
+                    'Save or share all voucher details as a spreadsheet file',
+                    () {
+                      Navigator.pop(context);
+                      _exportCsv();
+                    },
+                  ),
+                  _buildSettingsTile(
                     Icons.backup,
                     'Backup & Sync',
                     'Backup vouchers to cloud',
@@ -429,6 +464,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text('• Track total available credit'),
                 Text('• Mark vouchers as used'),
                 Text('• View voucher history'),
+                Text('• Export vouchers to CSV'),
               ],
             ),
             actions: [
@@ -447,7 +483,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final stats = voucherProvider.getStatistics();
     final lifetimeCredit = stats['lifetimeCredit'];
     final estimatedItems = lifetimeCredit > 0
-        ? (lifetimeCredit / 0.20).round()
+        ? (lifetimeCredit / kAvgDepositEuro).round()
         : 0;
 
     showDialog(
@@ -460,8 +496,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Total Lifetime Credit: €${lifetimeCredit.toStringAsFixed(
-                      2)}',
+                  'Total Lifetime Credit: €${lifetimeCredit.toStringAsFixed(2)}',
                   style: const TextStyle(
                       fontSize: 18, fontWeight: FontWeight.bold),
                 ),
@@ -469,6 +504,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(
                   'Wow! You have recycled approximately $estimatedItems items. Thank you for helping the planet!',
                   style: const TextStyle(fontSize: 14),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Estimate based on an average deposit of €${kAvgDepositEuro.toStringAsFixed(2)} per item.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
               ],
             ),
