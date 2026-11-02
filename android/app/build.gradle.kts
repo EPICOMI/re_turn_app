@@ -36,6 +36,8 @@ android {
         }
         // Explicitly define debug build type for testing
         getByName("debug") {
+            // Separate app ID so a debug build installs next to the existing app
+            applicationIdSuffix = ".debug"
             isMinifyEnabled = false
             isShrinkResources = false
             isDebuggable = true
