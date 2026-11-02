@@ -49,6 +49,8 @@ test/
 
 ## Getting started
 
+Developed and tested with Flutter 3.47.9 (stable) and Dart 3.13.7.
+
 ```
 git clone <this repository>
 cd re_turn_app
@@ -56,7 +58,7 @@ flutter pub get
 flutter run
 ```
 
-Camera, photo library and location permissions are requested at runtime.
+Camera, photo library and location permissions are requested at runtime. The ML Kit scanner, camera and GPS plugins need a physical Android or iOS device.
 
 ## Receipt parsing rules
 
@@ -77,14 +79,16 @@ The export contains one row per voucher with these columns:
 - Dates are ISO-8601. The file is UTF-8 with a byte-order mark so Excel shows the euro sign correctly.
 - Text starting with `=`, `+`, `-` or `@` is prefixed with an apostrophe so spreadsheets do not run it as a formula.
 
-## Testing
+## Testing and status
 
 ```
 flutter analyze
 flutter test
 ```
 
-The tests cover the receipt parser (dates, store matching, deposit priority, address, line endings) and the CSV service (escaping and row layout).
+- **Unit tests:** 20 tests pass. They cover the receipt parser (dates, store matching, deposit priority, address, line endings) and the CSV service (escaping and row layout).
+- **Static analysis:** `flutter analyze` reports no errors. 37 lint-level items remain (see Code quality below).
+- **Not yet covered by automated tests:** camera and ML Kit scanning, GPS, the share sheet, and the provider and database layers.
 
 ## Privacy
 
@@ -92,13 +96,25 @@ All data stays on the device. Vouchers, profile details and lifetime credit are 
 
 ## Roadmap and issues
 
+**Features**
+
 - **Voucher expiry:** store an expiry date per voucher and send reminders before it lapses.
 - **Cloud backup and sync:** back up vouchers and restore them on a new device.
 - **Notifications:** reminders for unused vouchers.
 - **Location-based store detection:** use the saved coordinates to suggest the nearest store instead of the scan location.
-- **Unique barcode constraint:** add a UNIQUE constraint on barcode with a database migration. Duplicate checking currently happens in the provider and only compares against active vouchers.
 - **Leaderboard:** compare lifetime recycling stats with friends.
-- **Better lifetime stats:** replace the average-deposit estimate (`kAvgDepositEuro`) with a real item count where available, and decide how deleting a voucher should affect lifetime credit.
 - **OCR confidence:** flag low-confidence fields for review before saving.
+
+**Data and logic**
+
+- **Unique barcode constraint:** add a UNIQUE constraint on barcode with a database migration. Duplicate checking currently happens in the provider and only compares against active vouchers.
+- **Better lifetime stats:** replace the average-deposit estimate (`kAvgDepositEuro`) with a real item count where available, and decide how deleting a voucher should affect lifetime credit.
 - **Camera permission:** only request camera access when using the camera, not for gallery import.
-- **Unit tests for the provider and database layer.**
+
+**Code quality**
+
+- Replace `print` calls with a logging framework (`barcode_screen.dart`, `voucher_card.dart`).
+- Migrate deprecated APIs: `withOpacity` to `withValues` (`scan_screen.dart`), and the screen brightness methods to their application-level replacements (`barcode_screen.dart`).
+- Guard `BuildContext` use after `await` with `mounted` checks (`profile_screen.dart`, `scan_screen.dart`, `voucher_card.dart`).
+- Remove dead code: the unused storage-permission helper and always-true null checks in `voucher_card.dart`, and the unused `image_cropper` import in `profile_screen.dart`.
+- Add unit tests for the provider and database layers.
