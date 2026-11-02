@@ -28,7 +28,6 @@ class DatabaseHelper {
 
   Future _createDB(Database db, int version) async {
     const textType = 'TEXT NOT NULL';
-    const integerType = 'INTEGER NOT NULL';
     const realType = 'REAL NOT NULL';
 
     await db.execute('''

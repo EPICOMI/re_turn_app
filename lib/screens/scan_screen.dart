@@ -8,6 +8,7 @@ import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:re_turn_app/models/voucher.dart';
 import 'package:re_turn_app/providers/voucher_provider.dart';
+import 'package:re_turn_app/services/receipt_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -456,7 +457,7 @@ class _ScanScreenState extends State<ScanScreen> {
           final textRecognizer =
               TextRecognizer(script: TextRecognitionScript.latin);
           final recognizedText = await textRecognizer.processImage(inputImage);
-          final extractedData = _parseReceiptText(recognizedText.text);
+          final extractedData = parseReceiptText(recognizedText.text);
 
           // Populate fields
           _depositController.text = extractedData['deposit'] ?? '';
@@ -495,54 +496,6 @@ class _ScanScreenState extends State<ScanScreen> {
         }
       }
     }
-  }
-
-  Map<String, String> _parseReceiptText(String text) {
-    final lines = text.split('\n');
-    final data = <String, String>{};
-    final datePatterns = [
-      RegExp(r'\d{2}/\d{2}/\d{4}\s+\d{2}:\d{2}'), // DD/MM/YYYY HH:MM
-      RegExp(r'\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}'), // YYYY-MM-DD HH:MM
-      RegExp(r'\d{2}-\d{2}-\d{4}\s+\d{2}:\d{2}'), // DD-MM-YYYY HH:MM
-    ];
-    final storeNames = ['lidl', 'tesco', 'supervalu', 'aldi', 'dunnes', 'centra', 'spar'];
-
-    for (final line in lines) {
-      final lowerLine = line.toLowerCase().trim();
-      // Date/Time
-      for (final pattern in datePatterns) {
-        final match = pattern.firstMatch(line);
-        if (match != null) {
-          data['dateTime'] = match.group(0)!;
-          break;
-        }
-      }
-      // Store Name
-      if (storeNames.any((store) => lowerLine.contains(store))) {
-        data['store'] = storeNames.firstWhere((store) => lowerLine.contains(store));
-      } else if (lowerLine.contains('store')) {
-        final parts = line.split(':');
-        if (parts.length > 1) data['store'] = parts[1].trim();
-      }
-      // Location
-      if (lowerLine.contains('address') || lowerLine.contains('location')) {
-        final parts = line.split(':');
-        if (parts.length > 1) {
-          data['location'] = parts[1].trim();
-        } else {
-          data['location'] = line.trim();
-        }
-      }
-      // Deposit Value
-      if (lowerLine.contains('deposit') || lowerLine.contains('re-turn') || lowerLine.contains('total')) {
-        final match = RegExp(r'€?\s*\d+\.\d{2}').firstMatch(line);
-        if (match != null) {
-          data['deposit'] = match.group(0)!.replaceAll('€', '').trim();
-        }
-      }
-    }
-
-    return data;
   }
 
   Future<void> _getCurrentLocation() async {
