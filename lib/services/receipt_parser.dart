@@ -1,7 +1,7 @@
-/// Pure-Dart receipt text parsing (no Flutter imports) so it can be unit tested.
-///
-/// Returned keys (all optional): 'dateTime' (ISO-8601), 'store', 'location',
-/// 'deposit' (e.g. "1.25", no currency symbol).
+// Pure-Dart receipt text parsing (no Flutter imports) so it can be unit tested.
+//
+// Returned keys (all optional): 'dateTime' (ISO-8601), 'store', 'location',
+// 'deposit' (e.g. "1.25", no currency symbol).
 
 /// Lower-case match word -> display name.
 const Map<String, String> kKnownStores = {
